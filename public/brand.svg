@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="SPIDER AI Browser">
+  <defs>
+    <linearGradient id="frame" x1="25" y1="20" x2="168" y2="169" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e11d2e"/>
+      <stop offset=".48" stop-color="#071a3d"/>
+      <stop offset="1" stop-color="#1263d8"/>
+    </linearGradient>
+    <radialGradient id="lens" cx="40%" cy="35%" r="70%">
+      <stop stop-color="#fbfdff"/>
+      <stop offset=".55" stop-color="#dcecff"/>
+      <stop offset="1" stop-color="#75b7ff"/>
+    </radialGradient>
+  </defs>
+  <rect x="9" y="9" width="174" height="174" rx="30" fill="#050608"/>
+  <path d="M25 31h142v130H25z" fill="url(#frame)"/>
+  <path d="M25 31h142v35H25z" fill="#fbfdff"/>
+  <circle cx="42" cy="49" r="6" fill="#e11d2e" stroke="#050608" stroke-width="4"/>
+  <circle cx="63" cy="49" r="6" fill="#f7d34b" stroke="#050608" stroke-width="4"/>
+  <circle cx="84" cy="49" r="6" fill="#1263d8" stroke="#050608" stroke-width="4"/>
+  <path d="M25 66h142" stroke="#050608" stroke-width="6"/>
+  <path d="M96 66v94M25 113h142M41 80l110 66M151 80 41 146" stroke="#fbfdff" stroke-width="5" stroke-linecap="round" opacity=".42"/>
+  <path d="M96 66 58 160M96 66l38 94M25 113l71-47 71 47" stroke="#050608" stroke-width="4" stroke-linecap="round" opacity=".45"/>
+  <circle cx="88" cy="104" r="38" fill="url(#lens)" stroke="#050608" stroke-width="8"/>
+  <path d="M116 132l33 33" stroke="#050608" stroke-width="15" stroke-linecap="round"/>
+  <path d="M116 132l33 33" stroke="#e11d2e" stroke-width="8" stroke-linecap="round"/>
+  <path d="M77 96c4-13 18-18 31-10M73 113c12 13 32 13 44-1" fill="none" stroke="#07111f" stroke-width="6" stroke-linecap="round"/>
+  <path d="M34 76h22M136 76h22M34 153h34M124 153h34" stroke="#f7d34b" stroke-width="7" stroke-linecap="round"/>
+</svg>

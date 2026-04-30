@@ -1,0 +1,20 @@
+{
+  "name": "spider-ai-browser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI search browser with local spider index and consent-gated source review.",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test",
+    "index:auto": "node scripts/indexAutomation.js",
+    "index:once": "node scripts/indexAutomation.js --once"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "playwright": "^1.59.1"
+  }
+}

@@ -1,0 +1,21 @@
+node_modules/
+.env
+.DS_Store
+coverage/
+npm-debug.log*
+
+# Local index + automation runtime artifacts
+data/knock-index.sqlite
+data/knock-index.sqlite-journal
+data/knock-index.sqlite-shm
+data/knock-index.sqlite-wal
+data/automation-status.json
+data/automation-cursor.json
+
+# Editor / IDE
+.idea/
+.vscode/
+.codex-screenshots/
+
+# Claude config
+.claude/

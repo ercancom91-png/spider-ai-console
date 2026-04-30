@@ -1,0 +1,7 @@
+# Background crawl seeds — her satır bir seed URL.
+# Yorumlar # ile başlar, boş satırlar görmezden gelinir.
+# Bu seedler SPIDER Index'i sürekli besler (ENABLE_BG_CRAWL=true ise).
+
+https://news.ycombinator.com/
+https://lobste.rs/
+https://github.com/trending
