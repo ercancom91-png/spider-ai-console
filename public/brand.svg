@@ -1,28 +1,123 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="SPIDER AI Browser">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="SPIDER AI">
   <defs>
-    <linearGradient id="frame" x1="25" y1="20" x2="168" y2="169" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#e11d2e"/>
-      <stop offset=".48" stop-color="#071a3d"/>
-      <stop offset="1" stop-color="#1263d8"/>
-    </linearGradient>
-    <radialGradient id="lens" cx="40%" cy="35%" r="70%">
-      <stop stop-color="#fbfdff"/>
-      <stop offset=".55" stop-color="#dcecff"/>
-      <stop offset="1" stop-color="#75b7ff"/>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#1c2026"/>
+      <stop offset="100%" stop-color="#08090b"/>
     </radialGradient>
+    <radialGradient id="bodyGrad" cx="50%" cy="40%" r="55%">
+      <stop offset="0%" stop-color="#3a3e44"/>
+      <stop offset="60%" stop-color="#15181d"/>
+      <stop offset="100%" stop-color="#08090b"/>
+    </radialGradient>
+    <radialGradient id="hourGlass" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#ff4848"/>
+      <stop offset="100%" stop-color="#8a1320"/>
+    </radialGradient>
+    <linearGradient id="metallicEdge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#f5f6f7" stop-opacity=".42"/>
+      <stop offset="50%" stop-color="#9aa0a8" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#f5f6f7" stop-opacity=".30"/>
+    </linearGradient>
   </defs>
-  <rect x="9" y="9" width="174" height="174" rx="30" fill="#050608"/>
-  <path d="M25 31h142v130H25z" fill="url(#frame)"/>
-  <path d="M25 31h142v35H25z" fill="#fbfdff"/>
-  <circle cx="42" cy="49" r="6" fill="#e11d2e" stroke="#050608" stroke-width="4"/>
-  <circle cx="63" cy="49" r="6" fill="#f7d34b" stroke="#050608" stroke-width="4"/>
-  <circle cx="84" cy="49" r="6" fill="#1263d8" stroke="#050608" stroke-width="4"/>
-  <path d="M25 66h142" stroke="#050608" stroke-width="6"/>
-  <path d="M96 66v94M25 113h142M41 80l110 66M151 80 41 146" stroke="#fbfdff" stroke-width="5" stroke-linecap="round" opacity=".42"/>
-  <path d="M96 66 58 160M96 66l38 94M25 113l71-47 71 47" stroke="#050608" stroke-width="4" stroke-linecap="round" opacity=".45"/>
-  <circle cx="88" cy="104" r="38" fill="url(#lens)" stroke="#050608" stroke-width="8"/>
-  <path d="M116 132l33 33" stroke="#050608" stroke-width="15" stroke-linecap="round"/>
-  <path d="M116 132l33 33" stroke="#e11d2e" stroke-width="8" stroke-linecap="round"/>
-  <path d="M77 96c4-13 18-18 31-10M73 113c12 13 32 13 44-1" fill="none" stroke="#07111f" stroke-width="6" stroke-linecap="round"/>
-  <path d="M34 76h22M136 76h22M34 153h34M124 153h34" stroke="#f7d34b" stroke-width="7" stroke-linecap="round"/>
+
+  <rect width="192" height="192" rx="32" fill="url(#bgGrad)"/>
+  <rect x="0.75" y="0.75" width="190.5" height="190.5" rx="31.25" fill="url(#metallicEdge)" stroke="rgba(200,204,209,0.22)" stroke-width="1.5"/>
+
+  <!-- Web rings -->
+  <g fill="none" stroke="rgba(200,204,209,0.14)" stroke-width="0.7">
+    <circle cx="96" cy="96" r="22"/>
+    <circle cx="96" cy="96" r="42"/>
+    <circle cx="96" cy="96" r="62"/>
+    <circle cx="96" cy="96" r="82"/>
+  </g>
+  <!-- Radial silk strands -->
+  <g fill="none" stroke="rgba(200,204,209,0.32)" stroke-width="0.9" stroke-linecap="round">
+    <line x1="96" y1="96" x2="96" y2="10"/>
+    <line x1="96" y1="96" x2="96" y2="182"/>
+    <line x1="96" y1="96" x2="10" y2="96"/>
+    <line x1="96" y1="96" x2="182" y2="96"/>
+    <line x1="96" y1="96" x2="35" y2="35"/>
+    <line x1="96" y1="96" x2="157" y2="35"/>
+    <line x1="96" y1="96" x2="35" y2="157"/>
+    <line x1="96" y1="96" x2="157" y2="157"/>
+    <line x1="96" y1="96" x2="62" y2="22"/>
+    <line x1="96" y1="96" x2="130" y2="22"/>
+    <line x1="96" y1="96" x2="62" y2="170"/>
+    <line x1="96" y1="96" x2="130" y2="170"/>
+  </g>
+  <!-- Dewdrops -->
+  <g fill="rgba(216,219,224,0.85)">
+    <circle cx="80" cy="58" r="1.4"/>
+    <circle cx="118" cy="62" r="1.4"/>
+    <circle cx="64" cy="118" r="1.6"/>
+    <circle cx="132" cy="124" r="1.4"/>
+    <circle cx="42" cy="78" r="1.2"/>
+    <circle cx="150" cy="90" r="1.2"/>
+  </g>
+  <circle cx="40" cy="40" r="1.8" fill="#d62828"/>
+  <circle cx="152" cy="148" r="1.6" fill="#d62828"/>
+
+  <!-- SPIDER -->
+  <g>
+    <!-- 8 articulated legs -->
+    <g fill="none" stroke="#d8dbe0" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <!-- left -->
+      <path d="M82 86 L48 56 L26 60"/>
+      <path d="M80 92 L36 86 L18 96"/>
+      <path d="M82 100 L42 110 L26 130"/>
+      <path d="M86 106 L62 138 L52 160"/>
+      <!-- right -->
+      <path d="M110 86 L144 56 L166 60"/>
+      <path d="M112 92 L156 86 L174 96"/>
+      <path d="M110 100 L150 110 L166 130"/>
+      <path d="M106 106 L130 138 L140 160"/>
+    </g>
+    <!-- leg highlights -->
+    <g fill="none" stroke="rgba(245,246,247,0.55)" stroke-width="0.8" stroke-linecap="round">
+      <path d="M82 86 L48 56"/>
+      <path d="M110 86 L144 56"/>
+      <path d="M86 106 L62 138"/>
+      <path d="M106 106 L130 138"/>
+    </g>
+
+    <!-- Body shadow -->
+    <ellipse cx="96" cy="106" rx="22" ry="14" fill="rgba(0,0,0,0.55)"/>
+
+    <!-- Cephalothorax (head) -->
+    <ellipse cx="96" cy="84" rx="11" ry="9.5" fill="url(#bodyGrad)" stroke="#3a3e44" stroke-width="1"/>
+    <ellipse cx="93.5" cy="80" rx="3.5" ry="2.5" fill="rgba(245,246,247,0.18)"/>
+
+    <!-- Abdomen (with red hourglass mark) -->
+    <ellipse cx="96" cy="106" rx="18" ry="20" fill="url(#bodyGrad)" stroke="#3a3e44" stroke-width="1"/>
+    <ellipse cx="89" cy="98" rx="5" ry="6" fill="rgba(245,246,247,0.15)"/>
+    <!-- hourglass -->
+    <path d="M88 98 L104 98 L100 106 L104 116 L88 116 L92 106 Z"
+          fill="url(#hourGlass)" stroke="#5a0c1a" stroke-width="0.6"/>
+
+    <!-- 8 eyes -->
+    <g fill="#d62828">
+      <circle cx="91"   cy="80" r="1.3"/>
+      <circle cx="101"  cy="80" r="1.3"/>
+      <circle cx="88"   cy="83" r="1"/>
+      <circle cx="104"  cy="83" r="1"/>
+      <circle cx="93"   cy="86" r="0.8"/>
+      <circle cx="99"   cy="86" r="0.8"/>
+      <circle cx="89.5" cy="86" r="0.7"/>
+      <circle cx="102.5" cy="86" r="0.7"/>
+    </g>
+    <g fill="rgba(255,255,255,0.7)">
+      <circle cx="91" cy="79.6" r="0.4"/>
+      <circle cx="101" cy="79.6" r="0.4"/>
+    </g>
+
+    <!-- chelicerae (fangs) -->
+    <g fill="#1c2026" stroke="#3a3e44" stroke-width="0.5">
+      <path d="M93 89 L92 93 L94 92 Z"/>
+      <path d="M99 89 L100 93 L98 92 Z"/>
+    </g>
+  </g>
+
+  <!-- Bottom-right red signal indicator -->
+  <circle cx="158" cy="158" r="4" fill="#d62828" opacity=".95"/>
+  <circle cx="158" cy="158" r="7" fill="none" stroke="#d62828" stroke-width="0.6" opacity=".55"/>
 </svg>

@@ -1,12 +1,73 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#050608"/>
-  <path d="M10 12h44v40H10z" fill="#071a3d"/>
-  <path d="M10 12h44v12H10z" fill="#fbfdff"/>
-  <path d="M32 24v28M10 38h44M18 28l28 20M46 28 18 48" stroke="#fbfdff" stroke-width="2" stroke-linecap="round" opacity=".5"/>
-  <circle cx="30" cy="35" r="13" fill="#dcecff" stroke="#050608" stroke-width="4"/>
-  <path d="M40 45l10 10" stroke="#050608" stroke-width="7" stroke-linecap="round"/>
-  <path d="M40 45l10 10" stroke="#e11d2e" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="17" cy="18" r="2.5" fill="#e11d2e"/>
-  <circle cx="25" cy="18" r="2.5" fill="#f7d34b"/>
-  <circle cx="33" cy="18" r="2.5" fill="#1263d8"/>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#1c2026"/>
+      <stop offset="100%" stop-color="#08090b"/>
+    </radialGradient>
+    <radialGradient id="bodyGrad" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#2e3137"/>
+      <stop offset="100%" stop-color="#08090b"/>
+    </radialGradient>
+    <linearGradient id="metallic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f5f6f7" stop-opacity=".35"/>
+      <stop offset="100%" stop-color="#9aa0a8" stop-opacity=".15"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="12" fill="url(#bg)"/>
+  <rect x="0.5" y="0.5" width="63" height="63" rx="11.5" fill="url(#metallic)" stroke="rgba(200,204,209,0.18)" stroke-width="1"/>
+
+  <!-- Ağ ipliği halkaları (ince) -->
+  <g fill="none" stroke="rgba(200,204,209,0.18)" stroke-width="0.6">
+    <circle cx="32" cy="32" r="9"/>
+    <circle cx="32" cy="32" r="16"/>
+    <circle cx="32" cy="32" r="23"/>
+  </g>
+  <!-- Radyal ipekler -->
+  <g fill="none" stroke="rgba(200,204,209,0.32)" stroke-width="0.7" stroke-linecap="round">
+    <line x1="32" y1="32" x2="32" y2="6"/>
+    <line x1="32" y1="32" x2="32" y2="58"/>
+    <line x1="32" y1="32" x2="6" y2="32"/>
+    <line x1="32" y1="32" x2="58" y2="32"/>
+    <line x1="32" y1="32" x2="14" y2="14"/>
+    <line x1="32" y1="32" x2="50" y2="14"/>
+    <line x1="32" y1="32" x2="14" y2="50"/>
+    <line x1="32" y1="32" x2="50" y2="50"/>
+  </g>
+
+  <!-- Bacaklar (8 bacak, eklemli) -->
+  <g fill="none" stroke="#d8dbe0" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Sol bacaklar -->
+    <path d="M28 28 L18 22 L12 26"/>
+    <path d="M28 30 L16 30 L11 35"/>
+    <path d="M28 33 L17 38 L13 44"/>
+    <path d="M29 35 L22 44 L20 50"/>
+    <!-- Sağ bacaklar -->
+    <path d="M36 28 L46 22 L52 26"/>
+    <path d="M36 30 L48 30 L53 35"/>
+    <path d="M36 33 L47 38 L51 44"/>
+    <path d="M35 35 L42 44 L44 50"/>
+  </g>
+
+  <!-- Gövde gölgesi -->
+  <ellipse cx="32" cy="36" rx="7.5" ry="5" fill="rgba(0,0,0,0.5)"/>
+  <!-- Cephalothorax -->
+  <ellipse cx="32" cy="28" rx="3.5" ry="3" fill="url(#bodyGrad)" stroke="#3a3e44" stroke-width="0.5"/>
+  <!-- Abdomen (kırmızı kum saati işareti ile) -->
+  <ellipse cx="32" cy="35" rx="5.5" ry="6.5" fill="url(#bodyGrad)" stroke="#3a3e44" stroke-width="0.5"/>
+  <path d="M30 32 L34 32 L33 35 L34 38 L30 38 L31 35 Z" fill="#d62828"/>
+  <!-- Gövde parlaklığı -->
+  <ellipse cx="30.5" cy="33" rx="1.4" ry="1.8" fill="rgba(245,246,247,0.18)"/>
+
+  <!-- Gözler (8 göz) -->
+  <g fill="#d62828">
+    <circle cx="30.4" cy="26.4" r="0.55"/>
+    <circle cx="33.6" cy="26.4" r="0.55"/>
+    <circle cx="29.4" cy="27.6" r="0.45"/>
+    <circle cx="34.6" cy="27.6" r="0.45"/>
+  </g>
+  <g fill="rgba(245,246,247,0.7)">
+    <circle cx="30.4" cy="26.4" r="0.18"/>
+    <circle cx="33.6" cy="26.4" r="0.18"/>
+  </g>
 </svg>
