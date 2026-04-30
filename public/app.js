@@ -5,7 +5,6 @@ const LICENSE_CACHE_KEY = "spider.licenseCache";
 const form = document.querySelector("#search-form");
 const fields = form.elements;
 const formStatus = document.querySelector("#form-status");
-const fillDemoButton = document.querySelector("#fill-demo");
 const submitButton = document.querySelector("#submit-button");
 
 const indexPill = document.querySelector("#index-pill");
@@ -93,7 +92,6 @@ function init() {
     localStorage.setItem(ONBOARDED_KEY, new Date().toISOString());
   });
 
-  fillDemoButton.addEventListener("click", fillDemo);
   form.addEventListener("submit", handleSearch);
   fields.photo.addEventListener("change", handlePhotoChange);
 
@@ -162,14 +160,6 @@ async function loadConfig() {
     indexPill.textContent = "index yok";
     aiPill.textContent = "AI yok";
   }
-}
-
-function fillDemo() {
-  fields.fullName.value = "Ayşe Demir";
-  fields.email.value = "ayse.demo@example.com";
-  fields.phone.value = "555 111 22 33";
-  fields.username.value = "aysedemir";
-  formStatus.textContent = "Demo kimliği hazır. Ara'ya bas.";
 }
 
 async function handlePhotoChange() {

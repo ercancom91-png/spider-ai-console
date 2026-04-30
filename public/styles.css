@@ -440,6 +440,7 @@ button { font: inherit; color: inherit; }
   transition: background .2s ease;
   min-width: 0;
 }
+.field[hidden] { display: none; }
 .search-grid .field:last-child { border-right: none; }
 .field > span {
   font-family: var(--mono);
@@ -536,19 +537,22 @@ button { font: inherit; color: inherit; }
   border-top: 1px dashed var(--pane-edge);
 }
 .field.compact {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
   padding: 10px 14px;
   border: 1px solid var(--pane-edge-2);
   background: var(--ink);
+  min-width: 0;
 }
-.field.compact > span { margin-bottom: 0; min-width: 100px; }
+.field.compact > span { margin-bottom: 0; min-width: 0; }
 .field.compact select {
   font-family: var(--sans);
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0;
+  width: 100%;
+  min-width: 0;
   background-image:
     linear-gradient(45deg, transparent 50%, var(--steel-400) 50%),
     linear-gradient(-45deg, transparent 50%, var(--steel-400) 50%);
@@ -557,6 +561,7 @@ button { font: inherit; color: inherit; }
   background-repeat: no-repeat;
   padding-right: 26px;
   cursor: pointer;
+  text-overflow: ellipsis;
 }
 .field.compact:focus-within { border-color: var(--red); }
 
