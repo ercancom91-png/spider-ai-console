@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: spider-ai-console
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: ""
+    startCommand: node src/server.js
+    healthCheckPath: /api/config
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: USE_DEMO_PROVIDER
+        value: "true"
+      - key: ENABLE_BG_CRAWL
+        value: "false"

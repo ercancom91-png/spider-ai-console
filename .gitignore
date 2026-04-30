@@ -19,3 +19,6 @@ data/automation-cursor.json
 
 # Claude config
 .claude/
+
+# Playwright MCP test artifacts
+.playwright-mcp/

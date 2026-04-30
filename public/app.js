@@ -114,6 +114,7 @@ function init() {
     if (!chip) return;
     state.filterCategory = chip.dataset.category;
     state.filterSubcategory = "all";
+    ensureTierStillSelectable();
     renderFilters();
     renderSubcategoryPanel();
     renderResults();
@@ -123,6 +124,8 @@ function init() {
     const btn = event.target.closest("[data-subcategory]");
     if (!btn) return;
     state.filterSubcategory = btn.dataset.subcategory;
+    ensureTierStillSelectable();
+    renderFilters();
     renderSubcategoryPanel();
     renderResults();
   });
@@ -164,7 +167,7 @@ async function loadConfig() {
 function fillDemo() {
   fields.fullName.value = "Ayşe Demir";
   fields.email.value = "ayse.demo@example.com";
-  fields.phone.value = "+90 555 111 2233";
+  fields.phone.value = "555 111 22 33";
   fields.username.value = "aysedemir";
   formStatus.textContent = "Demo kimliği hazır. Ara'ya bas.";
 }
@@ -333,8 +336,8 @@ function renderSummary() {
       : `${tiers.direct} tam · ${tiers.strong} güçlü · ${tiers.mention} bahsediyor`;
 
   summaryMetricsEl.innerHTML = [
-    metric("Tam", tiers.direct, "direct"),
-    metric("Güçlü", tiers.strong, "strong-tier"),
+    metric("Tam", tiers.direct, tiers.direct ? "direct" : ""),
+    metric("Güçlü", tiers.strong, tiers.strong ? "strong-tier" : ""),
     metric("Bahsediyor", tiers.mention, ""),
     metric("Site", summary.uniqueSources, "")
   ].join("");
@@ -364,13 +367,20 @@ function renderFilters() {
   filterBarEl.hidden = false;
   const results = state.report.results || [];
   const total = results.length;
+
+  const inCategory = results.filter(
+    (r) =>
+      (state.filterCategory === "all" || r.classification?.categoryId === state.filterCategory) &&
+      (state.filterSubcategory === "all" ||
+        r.classification?.subcategoryId === state.filterSubcategory)
+  );
   const tierCounts = { direct: 0, strong: 0, mention: 0 };
-  for (const r of results) {
+  for (const r of inCategory) {
     if (tierCounts[r.matchTier] != null) tierCounts[r.matchTier] += 1;
   }
 
   tierChipsEl.innerHTML = [
-    tierChip("all", "Tümü", total),
+    tierChip("all", "Tümü", inCategory.length),
     tierChip("direct", TIER_LABEL.direct, tierCounts.direct),
     tierChip("strong", TIER_LABEL.strong, tierCounts.strong),
     tierChip("mention", TIER_LABEL.mention, tierCounts.mention)
@@ -382,6 +392,19 @@ function renderFilters() {
     ...categories.map((c) => categoryChip(c.id, c.label, c.count))
   ];
   categoryChipsEl.innerHTML = categoryChips.join("");
+}
+
+function ensureTierStillSelectable() {
+  if (!state.report || state.filterTier === "all") return;
+  const results = state.report.results || [];
+  const hasMatch = results.some(
+    (r) =>
+      r.matchTier === state.filterTier &&
+      (state.filterCategory === "all" || r.classification?.categoryId === state.filterCategory) &&
+      (state.filterSubcategory === "all" ||
+        r.classification?.subcategoryId === state.filterSubcategory)
+  );
+  if (!hasMatch) state.filterTier = "all";
 }
 
 function renderSubcategoryPanel() {
