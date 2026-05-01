@@ -64,6 +64,38 @@ const TIER_LABEL = {
   mention: "Bahsediyor"
 };
 
+// UI-level category grouping. Backend taxonomy keeps 9 distinct categoryIds
+// for accurate classification, but the filter strip would feel overwhelming
+// if every backend bucket got its own chip. We collapse them into 5 groups
+// that match how an end user thinks: "where do I need to act?".
+const CATEGORY_GROUPS = [
+  { id: "social", label: "Sosyal medya", backendIds: ["social"] },
+  { id: "professional", label: "Profesyonel", backendIds: ["professional"] },
+  { id: "community", label: "Forum & topluluk", backendIds: ["community"] },
+  {
+    id: "exposure",
+    label: "Sızıntı / hassas",
+    backendIds: ["data-broker", "exposure", "adult-sensitive"]
+  },
+  {
+    id: "other",
+    label: "Diğer siteler",
+    backendIds: ["entertainment", "commerce", "other-sites"]
+  }
+];
+
+const BACKEND_TO_GROUP = (() => {
+  const map = new Map();
+  for (const group of CATEGORY_GROUPS) {
+    for (const id of group.backendIds) map.set(id, group.id);
+  }
+  return map;
+})();
+
+function groupForBackendId(backendId) {
+  return BACKEND_TO_GROUP.get(backendId) || "other";
+}
+
 const ENGINE_LIST = [
   { id: "knock-live", name: "SPIDER Live" },
   { id: "knock-index", name: "SPIDER Index" },
@@ -360,7 +392,8 @@ function renderFilters() {
 
   const inCategory = results.filter(
     (r) =>
-      (state.filterCategory === "all" || r.classification?.categoryId === state.filterCategory) &&
+      (state.filterCategory === "all" ||
+        groupForBackendId(r.classification?.categoryId) === state.filterCategory) &&
       (state.filterSubcategory === "all" ||
         r.classification?.subcategoryId === state.filterSubcategory)
   );
@@ -376,12 +409,28 @@ function renderFilters() {
     tierChip("mention", TIER_LABEL.mention, tierCounts.mention)
   ].join("");
 
-  const categories = state.report.categories || [];
-  const categoryChips = [
-    categoryChip("all", "Tüm kategoriler", total),
-    ...categories.map((c) => categoryChip(c.id, c.label, c.count))
-  ];
-  categoryChipsEl.innerHTML = categoryChips.join("");
+  const groupCounts = new Map();
+  for (const r of results) {
+    const g = groupForBackendId(r.classification?.categoryId);
+    groupCounts.set(g, (groupCounts.get(g) || 0) + 1);
+  }
+
+  const groupChips = [categoryChip("all", "Tüm kategoriler", total)];
+  for (const group of CATEGORY_GROUPS) {
+    const count = groupCounts.get(group.id) || 0;
+    if (count === 0) continue; // gizle: 0 olan grup chip'i göstermeyiz, gürültü olmasın
+    groupChips.push(categoryChip(group.id, group.label, count));
+  }
+  categoryChipsEl.innerHTML = groupChips.join("");
+}
+
+function matchesSubFilter(result, sub) {
+  if (sub === "all") return true;
+  // Subcategory chip can be a backend categoryId (mixed group) or a subcategoryId.
+  return (
+    result.classification?.subcategoryId === sub ||
+    result.classification?.categoryId === sub
+  );
 }
 
 function ensureTierStillSelectable() {
@@ -390,19 +439,47 @@ function ensureTierStillSelectable() {
   const hasMatch = results.some(
     (r) =>
       r.matchTier === state.filterTier &&
-      (state.filterCategory === "all" || r.classification?.categoryId === state.filterCategory) &&
-      (state.filterSubcategory === "all" ||
-        r.classification?.subcategoryId === state.filterSubcategory)
+      (state.filterCategory === "all" ||
+        groupForBackendId(r.classification?.categoryId) === state.filterCategory) &&
+      matchesSubFilter(r, state.filterSubcategory)
   );
   if (!hasMatch) state.filterTier = "all";
 }
 
 function renderSubcategoryPanel() {
   if (!state.report) return;
-  const categories = state.report.categories || [];
-  const activeCategory = categories.find((c) => c.id === state.filterCategory);
 
-  if (!activeCategory || !activeCategory.subcategories?.length || activeCategory.subcategories.length < 2) {
+  if (state.filterCategory === "all") {
+    resultsBody.classList.remove("with-panel");
+    subcategoryPanel.hidden = true;
+    return;
+  }
+
+  const group = CATEGORY_GROUPS.find((g) => g.id === state.filterCategory);
+  if (!group) {
+    resultsBody.classList.remove("with-panel");
+    subcategoryPanel.hidden = true;
+    return;
+  }
+
+  const categories = state.report.categories || [];
+  const groupCategories = categories.filter((c) => group.backendIds.includes(c.id));
+  const groupTotal = groupCategories.reduce((sum, c) => sum + c.count, 0);
+
+  // Birden çok backend kategorisi varsa onları üst seviyede ayrım olarak göster,
+  // tek bir backend kategorisi varsa onun alt kategorilerini direkt aç.
+  let items;
+  if (groupCategories.length > 1) {
+    items = groupCategories
+      .map((c) => ({ id: c.id, label: c.label, count: c.count }))
+      .sort((a, b) => b.count - a.count);
+  } else if (groupCategories.length === 1) {
+    items = groupCategories[0].subcategories || [];
+  } else {
+    items = [];
+  }
+
+  if (items.length < 2) {
     resultsBody.classList.remove("with-panel");
     subcategoryPanel.hidden = true;
     return;
@@ -410,18 +487,16 @@ function renderSubcategoryPanel() {
 
   resultsBody.classList.add("with-panel");
   subcategoryPanel.hidden = false;
-  subcategoryTitle.textContent = activeCategory.label;
+  subcategoryTitle.textContent = group.label;
 
-  const items = [
-    {
-      id: "all",
-      label: `Tüm ${activeCategory.label}`,
-      count: activeCategory.count
-    },
-    ...activeCategory.subcategories.map((s) => ({ id: s.id, label: s.label, count: s.count }))
-  ];
+  const allItem = {
+    id: "all",
+    label: `Tüm ${group.label}`,
+    count: groupTotal
+  };
 
-  subcategoryList.innerHTML = items
+  const renderable = [allItem, ...items];
+  subcategoryList.innerHTML = renderable
     .map(
       (item) => `
       <li>
@@ -455,13 +530,11 @@ function renderResults() {
   const filtered = (state.report.results || [])
     .filter((r) => state.filterTier === "all" || r.matchTier === state.filterTier)
     .filter(
-      (r) => state.filterCategory === "all" || r.classification?.categoryId === state.filterCategory
-    )
-    .filter(
       (r) =>
-        state.filterSubcategory === "all" ||
-        r.classification?.subcategoryId === state.filterSubcategory
-    );
+        state.filterCategory === "all" ||
+        groupForBackendId(r.classification?.categoryId) === state.filterCategory
+    )
+    .filter((r) => matchesSubFilter(r, state.filterSubcategory));
 
   const sorted = sortResults(filtered, state.sort);
 
