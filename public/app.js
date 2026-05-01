@@ -588,7 +588,13 @@ function renderResultCard(result) {
         ? `<span class="tag privacy-verified">Profil doğrulandı</span>`
         : "";
 
+  const evidencePriority = { email: 0, phone: 1, name: 2, username: 3 };
   const evidenceTags = (result.evidence || [])
+    .slice()
+    .sort(
+      (a, b) =>
+        (evidencePriority[a.type] ?? 4) - (evidencePriority[b.type] ?? 4)
+    )
     .slice(0, 4)
     .map((e) => {
       const text = e.label ? (e.value ? `${e.label}: ${e.value}` : e.label) : String(e);

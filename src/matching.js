@@ -57,7 +57,9 @@ export function scoreSearchResult(result, identifiers) {
               : "Kullanıcı adı eşleşti",
           value: identifier.canonical
         });
-        score += usernameMatch.kind === "fuzzy" ? 18 : 25;
+        // Username ikincil sinyaldir; isim/telefon/e-postayla yan yana geldiğinde
+        // confidence'ı yükseltir, tek başına ise tier'ı yukarı çekemez.
+        score += usernameMatch.kind === "fuzzy" ? 8 : 12;
       }
     }
 
@@ -84,9 +86,9 @@ export function scoreSearchResult(result, identifiers) {
   // Profile-probe direkt platform API/HTML imzasıyla hesabın varlığını doğruladı.
   // Snippet/searchableText'te kullanıcının verdiği isim/e-posta yoksa (gizli /
   // korunan hesaplarda public yüzey daracık olur) klasik kanıt akışı boş döner
-  // ve sonuç ranker tarafından elenir. Probe doğrulamasının kendisi başlı
-  // başına kanıt — bu bilgiyi evidence olarak yansıt ki "gizli hesaplar" da
-  // listelensin.
+  // ve sonuç ranker tarafından elenir. Probe doğrulamasının kendisi ikincil bir
+  // ipucu — bu bilgiyi evidence olarak yansıt ki "gizli hesaplar" da listelensin
+  // ama ranking'i yukarı çekmesin.
   if (directProbeHit && evidence.length === 0) {
     const usernameId = identifiers.find((id) => id.type === "username" && id.valid);
     evidence.push({
@@ -94,7 +96,7 @@ export function scoreSearchResult(result, identifiers) {
       label: "Profil doğrulandı (gizli/korunan olabilir)",
       value: usernameId?.canonical || result.platformKey || ""
     });
-    score += 12;
+    score += 6;
   }
 
   const emailEvidence = evidence.some((item) => item.type === "email");
@@ -231,23 +233,32 @@ function computeMatchTier({
   directProbeHit,
   independentSignals
 }) {
-  // direct: email/phone hit, two converging high-trust signals, or a verified
-  // direct username probe on a platform with a hard 200/JSON success contract.
+  // Önceliklendirme politikası:
+  //   - "direct": en az bir primary identifier (e-posta/telefon) net eşleşti.
+  //   - "strong": isim soyisim doğrulandı veya birden çok primary kanıt
+  //     yakınsadı.
+  //   - "mention": yalnızca username/profile-probe ipucu var ya da fuzzy.
+  // Username (ve directProbeHit) tek başına tier'ı yukarı çekemez; isim,
+  // telefon veya e-postayla yan yana geldiğinde primary sinyali güçlendirir.
+
   if (emailEvidence && phoneEvidence) return "direct";
+  if (highTrustEvidence && nameEvidence) return "direct";
   if (highTrustEvidence) return "direct";
-  if (directProbeHit) return "direct";
 
-  // Multi-evidence convergence without high-trust still earns direct grade.
-  if (independentSignals >= 3) return "direct";
-
-  // Surname guard: when a full name is given but never appears, suppress
-  // username-only / first-name-only hits to mention.
+  // Surname guard: tam isim verildi ama soyad geçmiyorsa username-only / first-
+  // name-only sonuçları "mention" seviyesine indir.
   if (hasFullName && !surnameConfirmed && !nameEvidence) return "mention";
 
-  if (usernameEvidence && nameEvidence && !fuzzyEvidence) return "strong";
+  // Birden çok primary identifier birleştiyse "strong"; sadece username dahil
+  // independentSignals sayısı şişiyorsa yetmemeli — primary olarak isim varsa
+  // anlamlı.
   if (nameEvidence && !fuzzyEvidence && score >= 20) return "strong";
-  if (!hasFullName && usernameEvidence && !fuzzyEvidence && score >= 20) return "strong";
+  if (independentSignals >= 3 && nameEvidence) return "strong";
 
+  // Username + name (fuzzy değil) → "strong"; isim sinyali zaten yeterli.
+  if (usernameEvidence && nameEvidence && !fuzzyEvidence) return "strong";
+
+  // Username yalnız başına ya da profile-probe baseline → mention.
   return "mention";
 }
 
