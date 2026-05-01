@@ -1,8 +1,22 @@
-const USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
+import { getWmnPlatforms, runWmnProbe } from "./wmnCatalog.js";
+
+// UA rotasyonu — soft-block / fingerprint çekiminden kaçınmak için her isteğe
+// güncel masaüstü tarayıcı UA'sından random biri seçilir.
+const USER_AGENTS = [
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+];
+
+function randomUA() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
 
 const PROBE_TIMEOUT_MS = 7_000;
-const CONCURRENCY = 14;
+// Yüksek concurrency güvenli: her site farklı host, per-host basıncı yok.
+const CONCURRENCY = 32;
 
 // Each platform declares how to confirm the profile actually exists.
 // method === "status": real hard-404 when username missing. Safe.
@@ -139,7 +153,15 @@ const PLATFORMS = [
   { key: "gravatarHandle", name: "Gravatar (handle)", category: "identity", url: (u) => `https://gravatar.com/${u}`, method: "status" }
 ];
 
-export async function searchProfileProbes(subject) {
+// WMN kataloğu lazy-load — her server start'ta tek kez okunur.
+let cachedWmnPlatforms = null;
+function wmnPlatforms() {
+  if (cachedWmnPlatforms) return cachedWmnPlatforms;
+  cachedWmnPlatforms = getWmnPlatforms();
+  return cachedWmnPlatforms;
+}
+
+export async function searchProfileProbes(subject, options = {}) {
   const username = subject.username;
   if (!username || username.length < 3) {
     return {
@@ -147,7 +169,7 @@ export async function searchProfileProbes(subject) {
       diagnostics: {
         mode: "profile-probe",
         platformsProbed: 0,
-        platformsTotal: PLATFORMS.length,
+        platformsTotal: PLATFORMS.length + wmnPlatforms().length,
         profilesFound: 0,
         reason: "Geçerli bir kullanıcı adı yok; profil sondası atlandı."
       }
@@ -155,7 +177,20 @@ export async function searchProfileProbes(subject) {
   }
 
   const encoded = encodeURIComponent(username);
-  const tasks = PLATFORMS.map((platform) => async () => {
+  const scanDepth = options.scanDepth || "balanced";
+  // scanDepth politikası:
+  //   balanced   → sadece hand-tuned (~150 platform, hızlı)
+  //   wide       → hand-tuned + WMN protection-suz (~700 platform, ~60s)
+  //   maximum    → hand-tuned + WMN tamamı (~750+ platform, ~90s)
+  let wmn = [];
+  if (scanDepth === "wide") {
+    wmn = wmnPlatforms().filter((p) => !p.protection);
+  } else if (scanDepth === "maximum") {
+    wmn = wmnPlatforms();
+  }
+
+  // Hand-tuned API/HTML probes (yüksek güven)
+  const apiTasks = PLATFORMS.map((platform) => async () => {
     try {
       return await probe(platform, username, encoded);
     } catch {
@@ -163,28 +198,87 @@ export async function searchProfileProbes(subject) {
     }
   });
 
-  const outcomes = await runWithConcurrency(tasks, CONCURRENCY);
+  // WMN kataloğu — iki taraflı doğrulamalı, 700+ platform
+  const wmnTasks = wmn.map((platform) => async () => {
+    try {
+      return await probeWmn(platform, username);
+    } catch {
+      return null;
+    }
+  });
+
+  const outcomes = await runWithConcurrency([...apiTasks, ...wmnTasks], CONCURRENCY);
   const hits = outcomes.filter((outcome) => outcome?.result);
-  const results = hits.map((hit) => hit.result);
+
+  // Aynı host'a hem hand-tuned hem WMN hit gelirse hand-tuned'i tercih et.
+  const dedupedByHost = new Map();
+  for (const hit of hits) {
+    const host = hostOf(hit.result.url);
+    const existing = dedupedByHost.get(host);
+    if (!existing) {
+      dedupedByHost.set(host, hit);
+      continue;
+    }
+    // hand-tuned (key kategorisinde "wmn:" yok) öncelikli
+    const existingIsWmn = existing.platform.key.startsWith("wmn:");
+    const incomingIsWmn = hit.platform.key.startsWith("wmn:");
+    if (existingIsWmn && !incomingIsWmn) {
+      dedupedByHost.set(host, hit);
+    }
+  }
+
+  const dedupedHits = [...dedupedByHost.values()];
+  const results = dedupedHits.map((hit) => hit.result);
 
   return {
     results,
     diagnostics: {
       mode: "profile-probe",
       platformsProbed: outcomes.length,
-      platformsTotal: PLATFORMS.length,
+      platformsTotal: PLATFORMS.length + wmn.length,
       profilesFound: results.length,
-      hitPlatforms: hits.map((hit) => hit.platform.key),
-      reason: `${PLATFORMS.length} platforma kullanıcı adı (${username}) ile direkt probe yapıldı; ${results.length} doğrulanmış profil bulundu. Anti-bot siteler sadece güçlü profil imzası varsa işaretlenir.`
+      hitPlatforms: dedupedHits.map((hit) => hit.platform.key),
+      reason: `${PLATFORMS.length} hand-tuned + ${wmn.length} WhatsMyName katalog platformuna kullanıcı adı (${username}) probe atıldı; ${results.length} doğrulanmış profil bulundu. WMN için iki taraflı (e_string + m_string) doğrulama uygulandı.`
     }
   };
+}
+
+function hostOf(url) {
+  try {
+    return new URL(url).host.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+async function probeWmn(platform, username) {
+  const fetchImpl = async (url, init) => {
+    return await request(
+      url,
+      {
+        "User-Agent": randomUA(),
+        "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
+        Accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
+        ...(init?.headers || {})
+      },
+      { method: init?.method || "GET", bodyLimit: 60_000, body: init?.body }
+    );
+  };
+
+  const outcome = await runWmnProbe(platform, username, fetchImpl);
+  if (outcome.state !== "exists") return null;
+
+  return makeHit(platform, username, outcome.url, {
+    probeLabel: `WMN iki-taraflı doğrulama (status ${outcome.status})`,
+    confidence: outcome.confidence
+  });
 }
 
 async function probe(platform, username, encoded) {
   const url = platform.url(encoded);
   const headers = {
-    "User-Agent": USER_AGENT,
-    "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.8",
+    "User-Agent": randomUA(),
+    "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
     Accept: "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8"
   };
 
@@ -369,6 +463,7 @@ function makeHit(platform, username, url, extras = {}) {
       platformKey: platform.key,
       platformCategory: platform.category,
       probeLabel: extras.probeLabel,
+      probeConfidence: extras.confidence ?? 0.95,
       evidenceHint: "username-direct-probe",
       query: `probe:${platform.key}:${username}`,
       fetchedAt: new Date().toISOString()
@@ -377,13 +472,14 @@ function makeHit(platform, username, url, extras = {}) {
   };
 }
 
-async function request(url, headers, { method = "GET", bodyLimit = 20_000 } = {}) {
+async function request(url, headers, { method = "GET", bodyLimit = 20_000, body } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   try {
     const response = await fetch(url, {
       method,
       headers,
+      body,
       redirect: "follow",
       signal: controller.signal
     });
