@@ -83,22 +83,6 @@ export function scoreSearchResult(result, identifiers) {
 
   const directProbeHit = result.sourceType === "profile-probe" && result.evidenceHint === "username-direct-probe";
 
-  // Profile-probe direkt platform API/HTML imzasıyla hesabın varlığını doğruladı.
-  // Snippet/searchableText'te kullanıcının verdiği isim/e-posta yoksa (gizli /
-  // korunan hesaplarda public yüzey daracık olur) klasik kanıt akışı boş döner
-  // ve sonuç ranker tarafından elenir. Probe doğrulamasının kendisi ikincil bir
-  // ipucu — bu bilgiyi evidence olarak yansıt ki "gizli hesaplar" da listelensin
-  // ama ranking'i yukarı çekmesin.
-  if (directProbeHit && evidence.length === 0) {
-    const usernameId = identifiers.find((id) => id.type === "username" && id.valid);
-    evidence.push({
-      type: "username",
-      label: "Profil doğrulandı (gizli/korunan olabilir)",
-      value: usernameId?.canonical || result.platformKey || ""
-    });
-    score += 6;
-  }
-
   const emailEvidence = evidence.some((item) => item.type === "email");
   const phoneEvidence = evidence.some((item) => item.type === "phone");
   const highTrustEvidence = emailEvidence || phoneEvidence;
@@ -280,9 +264,25 @@ function surnameTokensPresent(canonicalName, foldedTokens, compactFolded) {
 const TIER_RANK = { direct: 3, strong: 2, mention: 1 };
 
 export function rankResults(results, identifiers) {
+  const hasPrimaryIdentifier = identifiers.some(
+    (id) =>
+      id.valid && (id.type === "name" || id.type === "email" || id.type === "phone")
+  );
+
   return results
     .map((result) => scoreSearchResult(result, identifiers))
     .filter((result) => result.evidence.length > 0)
+    .filter((result) => {
+      // Username yardımcı parametre. Kullanıcı isim/telefon/e-posta'dan birini
+      // bile girdiyse, sadece username eşleşen sonuçları listeden çıkar — bunlar
+      // primary kanıt taşımıyor. Eğer user yalnız username verdiyse (primary
+      // yok), o zaman fallback olarak username-only sonuçları geçirelim ki
+      // tamamen boş ekran olmasın.
+      if (!hasPrimaryIdentifier) return true;
+      return result.evidence.some(
+        (item) => item.type === "name" || item.type === "email" || item.type === "phone"
+      );
+    })
     .sort((a, b) => {
       const tierDiff = (TIER_RANK[b.matchTier] || 0) - (TIER_RANK[a.matchTier] || 0);
       if (tierDiff !== 0) return tierDiff;
