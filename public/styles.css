@@ -1052,6 +1052,16 @@ button { font: inherit; color: inherit; }
   border-color: var(--red-3);
   background: var(--red-soft);
 }
+.tag.privacy-private {
+  color: #f4b942;
+  border-color: rgba(244, 185, 66, 0.45);
+  background: rgba(244, 185, 66, 0.1);
+}
+.tag.privacy-verified {
+  color: #58c5a0;
+  border-color: rgba(88, 197, 160, 0.42);
+  background: rgba(88, 197, 160, 0.1);
+}
 
 .result-remediation {
   margin-top: 14px;

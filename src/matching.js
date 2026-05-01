@@ -79,6 +79,24 @@ export function scoreSearchResult(result, identifiers) {
     }
   }
 
+  const directProbeHit = result.sourceType === "profile-probe" && result.evidenceHint === "username-direct-probe";
+
+  // Profile-probe direkt platform API/HTML imzasıyla hesabın varlığını doğruladı.
+  // Snippet/searchableText'te kullanıcının verdiği isim/e-posta yoksa (gizli /
+  // korunan hesaplarda public yüzey daracık olur) klasik kanıt akışı boş döner
+  // ve sonuç ranker tarafından elenir. Probe doğrulamasının kendisi başlı
+  // başına kanıt — bu bilgiyi evidence olarak yansıt ki "gizli hesaplar" da
+  // listelensin.
+  if (directProbeHit && evidence.length === 0) {
+    const usernameId = identifiers.find((id) => id.type === "username" && id.valid);
+    evidence.push({
+      type: "username",
+      label: "Profil doğrulandı (gizli/korunan olabilir)",
+      value: usernameId?.canonical || result.platformKey || ""
+    });
+    score += 12;
+  }
+
   const emailEvidence = evidence.some((item) => item.type === "email");
   const phoneEvidence = evidence.some((item) => item.type === "phone");
   const highTrustEvidence = emailEvidence || phoneEvidence;
@@ -93,7 +111,6 @@ export function scoreSearchResult(result, identifiers) {
   const surnameConfirmed = hasFullName
     ? surnameTokensPresent(nameIdentifier.canonical, foldedTokens, compactFolded)
     : true;
-  const directProbeHit = result.sourceType === "profile-probe" && result.evidenceHint === "username-direct-probe";
 
   // Multi-evidence convergence: more independent identifiers hitting the same
   // source = exponentially higher trust. Pentagon-grade signal: only treat
@@ -157,6 +174,8 @@ export function scoreSearchResult(result, identifiers) {
     (directProbeHit && (nameEvidence || emailEvidence)) ||
     independentSignals >= 3;
 
+  const privacyState = detectPrivacyState({ combinedText, host: sourceHost(result.url), directProbeHit });
+
   return {
     ...result,
     evidence,
@@ -165,8 +184,38 @@ export function scoreSearchResult(result, identifiers) {
     matchTier,
     confidence,
     verified,
-    independentSignals
+    independentSignals,
+    privacyState
   };
+}
+
+const PRIVACY_PATTERNS = [
+  /this account is private/i,
+  /bu hesap gizlidir/i,
+  /bu hesap özel/i,
+  /tweets are protected/i,
+  /these tweets are protected/i,
+  /protected tweets/i,
+  /korumalı tweet/i,
+  /this profile is private/i,
+  /private profile/i,
+  /korumal[ıi] hesap/i,
+  /follow to see/i,
+  /takip ederek g[öo]r/i,
+  /private community/i,
+  /restricted account/i,
+  /access denied/i,
+  /viewing this profile/i
+];
+
+function detectPrivacyState({ combinedText, host, directProbeHit }) {
+  if (!combinedText) {
+    return directProbeHit ? "verified" : "unknown";
+  }
+  for (const pattern of PRIVACY_PATTERNS) {
+    if (pattern.test(combinedText)) return "private";
+  }
+  return directProbeHit ? "verified" : "public";
 }
 
 function computeMatchTier({

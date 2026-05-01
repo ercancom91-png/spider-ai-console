@@ -508,6 +508,13 @@ function renderResultCard(result) {
       ? `<span class="tag sensitive">${escape(sensitivityLabel(sensitivity))}</span>`
       : "";
 
+  const privacyTag =
+    result.privacyState === "private"
+      ? `<span class="tag privacy-private">Gizli profil</span>`
+      : result.privacyState === "verified"
+        ? `<span class="tag privacy-verified">Profil doğrulandı</span>`
+        : "";
+
   const evidenceTags = (result.evidence || [])
     .slice(0, 4)
     .map((e) => {
@@ -534,6 +541,7 @@ function renderResultCard(result) {
       <div class="result-footer">
         ${category ? `<span class="tag">${escape(category)}</span>` : ""}
         ${subcategory ? `<span class="tag">${escape(subcategory)}</span>` : ""}
+        ${privacyTag}
         ${sensitivityTag}
         ${evidenceTags}
       </div>
