@@ -537,8 +537,59 @@ function renderResultCard(result) {
         ${sensitivityTag}
         ${evidenceTags}
       </div>
+      ${renderRemediation(result.remediation)}
     </li>
   `;
+}
+
+function renderRemediation(remediation) {
+  const actions = remediation?.actions || [];
+  if (!actions.length) return "";
+
+  const priorityRank = { urgent: 3, high: 2, medium: 1, low: 0 };
+  const sorted = [...actions].sort(
+    (a, b) => (priorityRank[b.priority] ?? 0) - (priorityRank[a.priority] ?? 0)
+  );
+
+  const items = sorted
+    .map((action) => {
+      const linkPrimary = action.url
+        ? `<a class="rem-link" href="${escape(action.url)}" target="_blank" rel="noreferrer">Aç</a>`
+        : "";
+      const linkSecondary = action.secondaryUrl
+        ? `<a class="rem-link rem-link-alt" href="${escape(action.secondaryUrl)}" target="_blank" rel="noreferrer">Alternatif</a>`
+        : "";
+      const priorityTag = action.priority
+        ? `<span class="rem-priority rem-${escape(action.priority)}">${escape(priorityLabel(action.priority))}</span>`
+        : "";
+      return `
+        <li class="rem-item">
+          <div class="rem-head">
+            ${priorityTag}
+            <strong>${escape(action.title)}</strong>
+          </div>
+          ${action.description ? `<p>${escape(action.description)}</p>` : ""}
+          <div class="rem-actions">${linkPrimary}${linkSecondary}</div>
+        </li>`;
+    })
+    .join("");
+
+  return `
+    <details class="result-remediation">
+      <summary>
+        <span class="rem-summary-label">Hesap silme / kaldırma adımları</span>
+        <span class="rem-count">${actions.length}</span>
+      </summary>
+      <ol class="rem-list">${items}</ol>
+    </details>
+  `;
+}
+
+function priorityLabel(priority) {
+  if (priority === "urgent") return "Acil";
+  if (priority === "high") return "Yüksek";
+  if (priority === "medium") return "Orta";
+  return "Düşük";
 }
 
 function renderErrors(errors) {
