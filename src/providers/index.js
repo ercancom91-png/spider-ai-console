@@ -7,6 +7,7 @@ import { searchHackerNews } from "./hackerNewsProvider.js";
 import { searchLocalIndex } from "./knockIndexProvider.js";
 import { searchMojeek } from "./mojeekProvider.js";
 import { searchProfileProbes } from "./profileProbeProvider.js";
+import { searchEmailProbes } from "./emailProbeProvider.js";
 import { searchReddit } from "./redditProvider.js";
 import { searchSearx } from "./searxProvider.js";
 import { searchSelfMade } from "./selfMadeProvider.js";
@@ -28,6 +29,7 @@ export async function runSearchProviders(subject, options = {}) {
   providerCalls.push({ name: "SPIDER Live", kind: "self-made-live", run: () => searchSelfMade(subject, options) });
   providerCalls.push({ name: "Startpage (Google)", kind: "web-search", run: () => searchStartpage(subject, options) });
   providerCalls.push({ name: "Profile Probe", kind: "profile-probe", run: () => searchProfileProbes(subject, options) });
+  providerCalls.push({ name: "Email Probe", kind: "email-probe", run: () => searchEmailProbes(subject, options) });
   // SPIDER Images (visual-image-search) disabled; bulky noise results, premium/photo flow hidden.
 
   if (config.bingSearchKey) {
