@@ -15,8 +15,10 @@ import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const WMN_PATH = join(__dirname, "..", "..", "data", "wmn", "wmn-data.json");
+const DISABLED_PATH = join(__dirname, "..", "..", "data", "wmn", "wmn-disabled.json");
 
 let cache = null;
+let disabledCache = null;
 
 function loadCatalog() {
   if (cache) return cache;
@@ -27,6 +29,17 @@ function loadCatalog() {
     cache = [];
   }
   return cache;
+}
+
+function loadDisabled() {
+  if (disabledCache) return disabledCache;
+  try {
+    const raw = JSON.parse(readFileSync(DISABLED_PATH, "utf-8"));
+    disabledCache = new Set(Array.isArray(raw?.disabled) ? raw.disabled : []);
+  } catch {
+    disabledCache = new Set();
+  }
+  return disabledCache;
 }
 
 // WMN kategorilerini bizim taxonomy bucket'larına eşle.
@@ -96,6 +109,7 @@ function hostFromUrl(url) {
 
 export function getWmnPlatforms() {
   const sites = loadCatalog();
+  const disabled = loadDisabled();
   const out = [];
 
   for (const site of sites) {
@@ -106,8 +120,11 @@ export function getWmnPlatforms() {
     if (!host) continue;
     if (SKIP_HOSTS.has(host)) continue;
 
+    const key = `wmn:${site.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    if (disabled.has(key)) continue;
+
     out.push({
-      key: `wmn:${site.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      key,
       name: site.name,
       category: mapCategory(site.cat),
       method: "wmn",

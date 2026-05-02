@@ -9,7 +9,9 @@
     "start": "node src/server.js",
     "test": "node --test",
     "index:auto": "node scripts/indexAutomation.js",
-    "index:once": "node scripts/indexAutomation.js --once"
+    "index:once": "node scripts/indexAutomation.js --once",
+    "wmn:selftest": "node scripts/wmnSelfTest.js",
+    "wmn:selftest:sanity": "node scripts/wmnSelfTest.js --limit 30"
   },
   "engines": {
     "node": ">=24"
