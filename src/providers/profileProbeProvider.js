@@ -18,6 +18,42 @@ const PROBE_TIMEOUT_MS = 7_000;
 // Yüksek concurrency güvenli: her site farklı host, per-host basıncı yok.
 const CONCURRENCY = 32;
 
+// Footer "Taranan Platformlar" listesi için statik katalog dökümü.
+// Hand-tuned + WMN aktif platformlarını isim/host/kategori ile döner.
+export function listScannedCatalog() {
+  const wmn = getWmnPlatforms();
+  return [
+    ...PLATFORMS.map((p) => ({
+      name: p.name,
+      host: hostForPlatform(p),
+      category: p.category,
+      source: "hand-tuned"
+    })),
+    ...wmn.map((p) => ({
+      name: p.name,
+      host: hostForWmnPlatform(p),
+      category: p.category,
+      source: "wmn"
+    }))
+  ];
+}
+
+function hostForPlatform(p) {
+  try {
+    return new URL(p.url("x")).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function hostForWmnPlatform(p) {
+  try {
+    return new URL(p.uriCheck.replace(/\{account\}/g, "x")).host.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
 // Each platform declares how to confirm the profile actually exists.
 // method === "status": real hard-404 when username missing. Safe.
 // method === "bodyContains": response body must match positive regex.

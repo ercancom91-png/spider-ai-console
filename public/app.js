@@ -25,6 +25,7 @@ const summaryMetricsEl = document.querySelector("#summary-metrics");
 const aiBriefEl = document.querySelector("#ai-brief");
 const phoneInsightEl = document.querySelector("#phone-insight");
 const scannedSourcesEl = document.querySelector("#scanned-sources");
+const scannedCandidatesEl = document.querySelector("#scanned-candidates");
 const filterBarEl = document.querySelector("#filter-bar");
 const tierChipsEl = document.querySelector("#tier-chips");
 const categoryChipsEl = document.querySelector("#category-chips");
@@ -190,10 +191,86 @@ async function loadConfig() {
     const config = await response.json();
     indexPill.textContent = `${config.index?.documents ?? 0} doküman`;
     aiPill.textContent = config.ai?.available ? "Local AI hazır" : "Local AI kural modu";
+    renderFooterCoverage(config);
   } catch {
     indexPill.textContent = "index yok";
     aiPill.textContent = "AI yok";
   }
+}
+
+// Footer'da statik "Taranan Platformlar" özeti.
+// /api/config'ten gelen scannedCatalog'u kategori bazında gruplayıp
+// her kategorinin ilk N platformunu listeler. Web search engines da gösterilir.
+function renderFooterCoverage(config) {
+  const el = document.querySelector("#foot-coverage");
+  if (!el) return;
+  const catalog = config?.scannedCatalog || [];
+  if (!catalog.length) return;
+
+  const labels = {
+    social: "Sosyal medya",
+    developer: "Geliştirici",
+    professional: "Profesyonel",
+    creator: "Creator / medya",
+    design: "Tasarım & görsel",
+    gaming: "Oyun",
+    identity: "Kimlik / avatar",
+    commerce: "Alışveriş",
+    forum: "Forum"
+  };
+  const order = ["social", "developer", "professional", "creator", "design", "gaming", "identity", "commerce", "forum"];
+
+  const byCat = groupBy(catalog, (p) => p.category);
+  const cats = Object.keys(byCat).sort(
+    (a, b) => order.indexOf(a) - order.indexOf(b) || (byCat[b].length - byCat[a].length)
+  );
+
+  const columns = cats
+    .map((cat) => {
+      const items = byCat[cat]
+        .slice(0, 14)
+        .map((p) => `<li>${escape(p.name)}</li>`)
+        .join("");
+      const overflow = byCat[cat].length > 14
+        ? `<li class="foot-cov-more">+${byCat[cat].length - 14} daha</li>`
+        : "";
+      return `
+        <div class="foot-cov-col">
+          <header>
+            <span class="foot-cov-cat">${escape(labels[cat] || cat)}</span>
+            <span class="foot-cov-num">${byCat[cat].length}</span>
+          </header>
+          <ul>${items}${overflow}</ul>
+        </div>
+      `;
+    })
+    .join("");
+
+  // Web search engines from config.searchSources
+  const sources = config?.searchSources || [];
+  const sourceList = sources
+    .map((s) => `<li>${escape(s.name || s.id || s.host || "")}</li>`)
+    .join("");
+
+  el.hidden = false;
+  el.innerHTML = `
+    <header class="foot-cov-head">
+      <span class="foot-cov-eyebrow">Taranan Kaynak Havuzu</span>
+      <span class="foot-cov-total">${catalog.length} profil platformu · ${sources.length} web arama kaynağı</span>
+    </header>
+    <div class="foot-cov-grid">
+      ${columns}
+      ${sources.length ? `
+        <div class="foot-cov-col foot-cov-engines">
+          <header>
+            <span class="foot-cov-cat">Arama motorları</span>
+            <span class="foot-cov-num">${sources.length}</span>
+          </header>
+          <ul>${sourceList}</ul>
+        </div>
+      ` : ""}
+    </div>
+  `;
 }
 
 async function handlePhotoChange() {
@@ -274,6 +351,7 @@ async function handleSearch(event) {
     renderSubcategoryPanel();
     renderResults();
     renderScannedSources();
+    renderScannedCandidates();
     formStatus.textContent = "Arama tamam.";
   } catch (error) {
     completeProgressSimulation();
@@ -559,6 +637,70 @@ function groupBy(items, keyFn) {
     map[key].push(item);
   }
   return map;
+}
+
+// Eşleşme akışından önce / dışında ham olarak taranan tüm aday URL'leri göster.
+// Kullanıcı "181 sonuç tarandı" başlığının arkasındaki gerçek listeyi
+// görebilsin. Provider'a göre gruplanır.
+function renderScannedCandidates() {
+  if (!state.report) {
+    scannedCandidatesEl.hidden = true;
+    scannedCandidatesEl.innerHTML = "";
+    return;
+  }
+
+  const candidates = state.report.scannedCandidates || [];
+  if (!candidates.length) {
+    scannedCandidatesEl.hidden = true;
+    return;
+  }
+
+  scannedCandidatesEl.hidden = false;
+
+  const matchedUrls = new Set((state.report.results || []).map((r) => r.url));
+  const byProvider = groupBy(candidates, (c) => c.provider || "—");
+  const providerOrder = Object.keys(byProvider).sort(
+    (a, b) => byProvider[b].length - byProvider[a].length
+  );
+
+  const blocks = providerOrder
+    .map((provider) => {
+      const items = byProvider[provider]
+        .map((c) => {
+          const matched = matchedUrls.has(c.url);
+          const dot = matched
+            ? `<span class="cand-dot ok" title="Eşleşme oldu">●</span>`
+            : `<span class="cand-dot" title="Eşleşme zayıf — kanıt yok"></span>`;
+          return `
+            <li>
+              ${dot}
+              <a href="${escape(c.url)}" target="_blank" rel="noreferrer" class="cand-link">
+                <span class="cand-title">${escape(c.title || c.host)}</span>
+                <span class="cand-host">${escape(c.host)}</span>
+              </a>
+            </li>`;
+        })
+        .join("");
+      return `
+        <details class="cand-block">
+          <summary>
+            <span class="cand-eyebrow">${escape(provider)}</span>
+            <span class="cand-count">${byProvider[provider].length} URL</span>
+          </summary>
+          <ul class="cand-list">${items}</ul>
+        </details>
+      `;
+    })
+    .join("");
+
+  const matchedCount = candidates.filter((c) => matchedUrls.has(c.url)).length;
+  scannedCandidatesEl.innerHTML = `
+    <header class="scanned-head">
+      <span class="scanned-eyebrow-large">İncelenen Kaynaklar</span>
+      <span class="scanned-total">${candidates.length} ham URL · ${matchedCount} eşleşti · ${candidates.length - matchedCount} kanıtsız</span>
+    </header>
+    ${blocks}
+  `;
 }
 
 function renderFilters() {

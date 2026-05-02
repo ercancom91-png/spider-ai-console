@@ -10,6 +10,7 @@ import { getIndexStatus } from "./knockIndex.js";
 import { buildLocalAiBrief, getLocalAiStatus } from "./localAi.js";
 import { validateConsent } from "./privacy.js";
 import { runSearchProviders } from "./providers/index.js";
+import { listScannedCatalog } from "./providers/profileProbeProvider.js";
 import { publicSearchSources, publicTaxonomy } from "./taxonomy.js";
 import { readLicenseFromHeaders, validateLicense } from "./license.js";
 import { startBackgroundCrawl, backgroundStatus } from "./backgroundCrawler.js";
@@ -35,6 +36,7 @@ const server = createServer(async (request, response) => {
         retentionDaysLimit: config.retentionDaysLimit,
         taxonomy: publicTaxonomy(),
         searchSources: publicSearchSources({ scanDepth: "balanced" }),
+        scannedCatalog: listScannedCatalog(),
         index: getIndexStatus(),
         ai: await getLocalAiStatus()
       });

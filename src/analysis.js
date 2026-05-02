@@ -75,9 +75,25 @@ export function buildAuditReport({
     searchSources: publicSearchSources(searchOptions),
     visualSearch: buildVisualSearch({ subject, results: ranked }),
     phoneInsight: subject.phone?.raw ? buildPhoneInsight(subject.phone.raw) : null,
+    scannedCandidates: buildScannedCandidates(dedupedRaw),
     results: ranked,
     warnings
   };
+}
+
+// UI'da "İncelenen Kaynaklar" listesi için ham aday URL'leri çıkar.
+// Eşleşme akışı 0 sonuç verse bile kullanıcı tarama izini görebilsin.
+function buildScannedCandidates(dedupedRaw) {
+  if (!Array.isArray(dedupedRaw)) return [];
+  return dedupedRaw
+    .map((r) => ({
+      url: r?.url || "",
+      host: sourceHost(r?.url || ""),
+      title: typeof r?.title === "string" ? r.title.slice(0, 220) : "",
+      provider: r?.provider || "",
+      sourceType: r?.sourceType || ""
+    }))
+    .filter((r) => r.url);
 }
 
 function dedupeRawResults(results = []) {
