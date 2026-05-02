@@ -230,14 +230,42 @@ export async function searchProfileProbes(subject, options = {}) {
   const dedupedHits = [...dedupedByHost.values()];
   const results = dedupedHits.map((hit) => hit.result);
 
+  // Kategori dağılımı — taranan platformların hangi kategorilere düştüğünü
+  // UI'a aktar (transparency panel).
+  const breakdown = {};
+  for (const p of PLATFORMS) {
+    breakdown[p.category] = (breakdown[p.category] || 0) + 1;
+  }
+  for (const p of wmn) {
+    breakdown[p.category] = (breakdown[p.category] || 0) + 1;
+  }
+
   return {
     results,
     diagnostics: {
       mode: "profile-probe",
       platformsProbed: outcomes.length,
       platformsTotal: PLATFORMS.length + wmn.length,
+      handTunedCount: PLATFORMS.length,
+      wmnCount: wmn.length,
+      categoryBreakdown: breakdown,
       profilesFound: results.length,
       hitPlatforms: dedupedHits.map((hit) => hit.platform.key),
+      // Frontend transparency kartı için tüm platform isim/host/cat listesi.
+      probedPlatforms: [
+        ...PLATFORMS.map((p) => ({
+          name: p.name,
+          host: hostOf(p.url("x")),
+          category: p.category,
+          source: "hand-tuned"
+        })),
+        ...wmn.map((p) => ({
+          name: p.name,
+          host: hostOf(p.uriCheck.replace(/\{account\}/g, "x")),
+          category: p.category,
+          source: "wmn"
+        }))
+      ],
       reason: `${PLATFORMS.length} hand-tuned + ${wmn.length} WhatsMyName katalog platformuna kullanıcı adı (${username}) probe atıldı; ${results.length} doğrulanmış profil bulundu. WMN için iki taraflı (e_string + m_string) doğrulama uygulandı.`
     }
   };

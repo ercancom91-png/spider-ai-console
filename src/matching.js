@@ -49,13 +49,21 @@ export function scoreSearchResult(result, identifiers) {
     if (identifier.type === "username") {
       const usernameMatch = matchUsername(identifier.canonical, folded, compactFolded, foldedTokens);
       if (usernameMatch.matched) {
+        // Sayfada gerçekten eşleşen token (örn. "samil" girildi, "samilsaygili"
+        // bulundu) varsa onu da göster — kullanıcı arada ne olduğunu görsün.
+        const matched = usernameMatch.matchedToken;
+        const isPrefixVariant = matched && matched !== identifier.canonical;
         evidence.push({
           type: "username",
           label:
             usernameMatch.kind === "fuzzy"
               ? "Kullanıcı adı yazım farkıyla eşleşti"
-              : "Kullanıcı adı eşleşti",
-          value: identifier.canonical
+              : isPrefixVariant
+                ? "Kullanıcı adı varyantı eşleşti"
+                : "Kullanıcı adı eşleşti",
+          value: isPrefixVariant
+            ? `${identifier.canonical} → ${matched}`
+            : identifier.canonical
         });
         // Username ikincil sinyaldir; isim/telefon/e-postayla yan yana geldiğinde
         // confidence'ı yükseltir, tek başına ise tier'ı yukarı çekemez.
@@ -307,15 +315,35 @@ function matchUsername(username, folded, compactFolded, foldedTokens) {
   }
 
   if (folded.includes(canonical) || compactFolded.includes(compact)) {
-    return { matched: true, kind: "exact" };
+    // Hangi token gerçekten eşleşti? Tam eşleşme veya prefix match olabilir
+    // (kullanıcı "samil" girdiyse sayfada "samilsaygili" geçiyor olabilir).
+    const matchedToken = findMatchedToken(canonical, foldedTokens);
+    return { matched: true, kind: "exact", matchedToken };
   }
 
   if (compact.length < 5) {
     return { matched: false, kind: "" };
   }
 
-  const matched = foldedTokens.some((token) => isNearToken(compact, token, usernameMaxDistance(compact)));
-  return { matched, kind: matched ? "fuzzy" : "" };
+  const fuzzyToken = foldedTokens.find((token) => isNearToken(compact, token, usernameMaxDistance(compact)));
+  if (fuzzyToken) {
+    return { matched: true, kind: "fuzzy", matchedToken: fuzzyToken };
+  }
+  return { matched: false, kind: "" };
+}
+
+// folded text içinde canonical username'in geçtiği gerçek kelimeyi döndür.
+// Öncelik: tam eşleşme > prefix-match (samil → samilsaygili) > içerme.
+function findMatchedToken(canonical, foldedTokens) {
+  if (!canonical) return "";
+  if (foldedTokens.includes(canonical)) return canonical;
+  for (const token of foldedTokens) {
+    if (token.startsWith(canonical) && token !== canonical) return token;
+  }
+  for (const token of foldedTokens) {
+    if (token.includes(canonical) && token !== canonical) return token;
+  }
+  return canonical;
 }
 
 function matchName(name, folded, compactFolded, foldedTokens) {

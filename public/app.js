@@ -24,6 +24,7 @@ const resultSubtitleEl = document.querySelector("#result-subtitle");
 const summaryMetricsEl = document.querySelector("#summary-metrics");
 const aiBriefEl = document.querySelector("#ai-brief");
 const phoneInsightEl = document.querySelector("#phone-insight");
+const scannedSourcesEl = document.querySelector("#scanned-sources");
 const filterBarEl = document.querySelector("#filter-bar");
 const tierChipsEl = document.querySelector("#tier-chips");
 const categoryChipsEl = document.querySelector("#category-chips");
@@ -272,6 +273,7 @@ async function handleSearch(event) {
     renderFilters();
     renderSubcategoryPanel();
     renderResults();
+    renderScannedSources();
     formStatus.textContent = "Arama tamam.";
   } catch (error) {
     completeProgressSimulation();
@@ -417,6 +419,146 @@ function countryFlag(iso2) {
     .split("")
     .map((c) => 127397 + c.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
+}
+
+// "Taranan kaynaklar" şeffaflık paneli — sonuç listesinin altında, kullanıcıya
+// nereleri gerçekten taradığımızı kategori bazında gösterir. Profile probe
+// (hand-tuned + WMN), e-posta probe modülleri, web arama motorları ayrı
+// alt panellerde listelenir.
+function renderScannedSources() {
+  if (!state.report) {
+    scannedSourcesEl.hidden = true;
+    scannedSourcesEl.innerHTML = "";
+    return;
+  }
+
+  const providers = state.report.providers || [];
+  const profileProbe = providers.find((p) => p.kind === "profile-probe");
+  const emailProbe = providers.find((p) => p.kind === "email-probe");
+  const webProviders = providers.filter((p) => p.kind === "web-search" || p.kind === "self-made-live" || p.kind === "self-hosted-index");
+
+  const totalPlatforms =
+    (profileProbe?.diagnostics?.platformsTotal || 0) +
+    (emailProbe?.diagnostics?.modulesTotal || 0) +
+    webProviders.length;
+
+  const sections = [];
+
+  // Profile probe (hand-tuned + WMN)
+  if (profileProbe?.diagnostics?.probedPlatforms?.length) {
+    const platforms = profileProbe.diagnostics.probedPlatforms;
+    const byCat = groupBy(platforms, (p) => p.category);
+    const handCount = profileProbe.diagnostics.handTunedCount || 0;
+    const wmnCount = profileProbe.diagnostics.wmnCount || 0;
+    sections.push(`
+      <details class="scanned-block" open>
+        <summary>
+          <span class="scanned-eyebrow">Kullanıcı adı probe'u</span>
+          <span class="scanned-count">${platforms.length} platform · ${handCount} hand-tuned + ${wmnCount} WMN katalog</span>
+        </summary>
+        <div class="scanned-grid">${renderCategoryColumns(byCat)}</div>
+      </details>
+    `);
+  }
+
+  // Email probe
+  if (emailProbe?.diagnostics?.probedModules?.length) {
+    const modules = emailProbe.diagnostics.probedModules;
+    const hits = new Set(emailProbe.diagnostics.hitModules || []);
+    const items = modules
+      .map((m) => {
+        const isHit = hits.has(m.name);
+        return `<li class="${isHit ? "hit" : ""}">${escape(m.name)}${isHit ? " <span class=\"hit-dot\">●</span>" : ""}</li>`;
+      })
+      .join("");
+    sections.push(`
+      <details class="scanned-block">
+        <summary>
+          <span class="scanned-eyebrow">E-posta probe'u (Holehe pattern)</span>
+          <span class="scanned-count">${modules.length} modül · ${hits.size} hit</span>
+        </summary>
+        <ul class="scanned-flat">${items}</ul>
+      </details>
+    `);
+  }
+
+  // Web search providers
+  if (webProviders.length) {
+    const items = webProviders
+      .map((p) => {
+        const status = p.status === "fulfilled" ? `<span class="status ok">✓ ${p.resultCount || 0} sonuç</span>` : `<span class="status warn">${escape(p.status)}</span>`;
+        return `<li><span class="provider-name">${escape(p.name)}</span> ${status}</li>`;
+      })
+      .join("");
+    sections.push(`
+      <details class="scanned-block">
+        <summary>
+          <span class="scanned-eyebrow">Web arama motorları</span>
+          <span class="scanned-count">${webProviders.length} kaynak</span>
+        </summary>
+        <ul class="scanned-flat scanned-providers">${items}</ul>
+      </details>
+    `);
+  }
+
+  if (!sections.length) {
+    scannedSourcesEl.hidden = true;
+    return;
+  }
+
+  scannedSourcesEl.hidden = false;
+  scannedSourcesEl.innerHTML = `
+    <header class="scanned-head">
+      <span class="scanned-eyebrow-large">Taranan Kaynaklar</span>
+      <span class="scanned-total">${totalPlatforms} kaynak gözden geçirildi</span>
+    </header>
+    ${sections.join("")}
+  `;
+}
+
+function renderCategoryColumns(byCat) {
+  const order = ["social", "developer", "professional", "creator", "design", "gaming", "identity", "commerce"];
+  const labels = {
+    social: "Sosyal medya",
+    developer: "Geliştirici",
+    professional: "Profesyonel",
+    creator: "Creator / medya",
+    design: "Tasarım & görsel",
+    gaming: "Oyun",
+    identity: "Kimlik / avatar",
+    commerce: "Alışveriş"
+  };
+  const sortedCats = Object.keys(byCat).sort(
+    (a, b) => order.indexOf(a) - order.indexOf(b) || (byCat[b].length - byCat[a].length)
+  );
+  return sortedCats
+    .map((cat) => {
+      const items = byCat[cat]
+        .slice(0, 24)
+        .map((p) => `<li>${escape(p.name)}</li>`)
+        .join("");
+      const overflow = byCat[cat].length > 24 ? `<li class="overflow">+${byCat[cat].length - 24} daha</li>` : "";
+      return `
+        <div class="scanned-column">
+          <header>
+            <strong>${escape(labels[cat] || cat)}</strong>
+            <span>${byCat[cat].length}</span>
+          </header>
+          <ul>${items}${overflow}</ul>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function groupBy(items, keyFn) {
+  const map = {};
+  for (const item of items) {
+    const key = keyFn(item);
+    if (!map[key]) map[key] = [];
+    map[key].push(item);
+  }
+  return map;
 }
 
 function renderFilters() {

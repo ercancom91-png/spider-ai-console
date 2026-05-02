@@ -275,6 +275,7 @@ export async function searchEmailProbes(subject) {
       modulesTotal: MODULES.length,
       accountsFound: hits.length,
       hitModules: hits.map((h) => h.module.name),
+      probedModules: MODULES.map((m) => ({ name: m.name, category: m.category, host: new URL(m.homepage).host })),
       reason: `${MODULES.length} platforma e-posta (${email}) ile kayıt sinyali probe atıldı; ${hits.length} kayıtlı hesap tespit edildi. Holehe pattern'i: signup/forgot-password çakışma cevabını okuma — e-posta gönderilmez.`
     }
   };
