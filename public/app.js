@@ -23,6 +23,7 @@ const resultTitleEl = document.querySelector("#result-title");
 const resultSubtitleEl = document.querySelector("#result-subtitle");
 const summaryMetricsEl = document.querySelector("#summary-metrics");
 const aiBriefEl = document.querySelector("#ai-brief");
+const phoneInsightEl = document.querySelector("#phone-insight");
 const filterBarEl = document.querySelector("#filter-bar");
 const tierChipsEl = document.querySelector("#tier-chips");
 const categoryChipsEl = document.querySelector("#category-chips");
@@ -267,6 +268,7 @@ async function handleSearch(event) {
     resultsSection.hidden = false;
     renderSummary();
     renderAiBrief();
+    renderPhoneInsight();
     renderFilters();
     renderSubcategoryPanel();
     renderResults();
@@ -378,6 +380,43 @@ function renderAiBrief() {
   }
   aiBriefEl.classList.add("visible");
   aiBriefEl.innerHTML = `<strong>AI brief</strong><p>${escape(brief.text)}</p>`;
+}
+
+function renderPhoneInsight() {
+  const insight = state.report?.phoneInsight;
+  if (!insight) {
+    phoneInsightEl.hidden = true;
+    phoneInsightEl.innerHTML = "";
+    return;
+  }
+  phoneInsightEl.hidden = false;
+  const validityBadge = insight.isValid
+    ? `<span class="phone-badge ok">Geçerli numara</span>`
+    : `<span class="phone-badge warn">Geçerlilik düşük — yazım hatası olabilir</span>`;
+  const flag = insight.country ? countryFlag(insight.country) : "";
+  phoneInsightEl.innerHTML = `
+    <header class="phone-insight-head">
+      <span class="phone-insight-eyebrow">Telefon analizi (libphonenumber)</span>
+      ${validityBadge}
+    </header>
+    <div class="phone-insight-grid">
+      <div><dt>Ülke</dt><dd>${flag} ${escape(insight.country || "—")}</dd></div>
+      <div><dt>Çağrı kodu</dt><dd>${escape(insight.countryCallingCode || "—")}</dd></div>
+      <div><dt>Hat tipi</dt><dd>${escape(insight.typeLabel || "—")}</dd></div>
+      <div><dt>E.164</dt><dd>${escape(insight.e164 || "—")}</dd></div>
+      <div><dt>Uluslararası</dt><dd>${escape(insight.international || "—")}</dd></div>
+      <div><dt>Yerel format</dt><dd>${escape(insight.national || "—")}</dd></div>
+    </div>
+  `;
+}
+
+function countryFlag(iso2) {
+  if (!iso2 || iso2.length !== 2) return "";
+  const codePoints = iso2
+    .toUpperCase()
+    .split("")
+    .map((c) => 127397 + c.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
 }
 
 function renderFilters() {

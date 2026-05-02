@@ -1,5 +1,6 @@
 import { config } from "./config.js";
 import { searchScopeDomains } from "./taxonomy.js";
+import { buildPhoneInsight } from "./phoneInsight.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -212,6 +213,18 @@ export function buildSearchQueries(subject, options = {}) {
   for (const domain of scopedDomains) {
     for (const term of scopedTerms) {
       queries.push(term.includes(" ") ? `site:${domain} "${term}"` : `site:${domain} ${term}`);
+    }
+  }
+
+  // PhoneInfoga-style dork enrichment: telefon insight'i mevcutsa scam-report
+  // ve direktorı sitelerine yönelik özel dork'ları sorgu listesine ekle.
+  if (subject.phone?.raw) {
+    const insight = buildPhoneInsight(subject.phone.raw);
+    if (insight?.dorks?.length) {
+      const dorkBudget = scanDepth === "maximum" ? 24 : scanDepth === "wide" ? 16 : 8;
+      for (const dork of insight.dorks.slice(0, dorkBudget)) {
+        queries.push(dork);
+      }
     }
   }
 

@@ -2,6 +2,7 @@ import { rankResults, sourceHost } from "./matching.js";
 import { publicSubjectView } from "./privacy.js";
 import { buildResultRemediation } from "./remediation.js";
 import { buildCategorySummary, classifyResult, publicSearchSources } from "./taxonomy.js";
+import { buildPhoneInsight } from "./phoneInsight.js";
 
 export function buildAuditReport({
   subject,
@@ -73,6 +74,7 @@ export function buildAuditReport({
     providers: providerStatus,
     searchSources: publicSearchSources(searchOptions),
     visualSearch: buildVisualSearch({ subject, results: ranked }),
+    phoneInsight: subject.phone?.raw ? buildPhoneInsight(subject.phone.raw) : null,
     results: ranked,
     warnings
   };
