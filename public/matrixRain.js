@@ -40,11 +40,11 @@
   function makeDrop() {
     return {
       y: -Math.random() * 200,
-      speed: 0.35 + Math.random() * 1.15,
+      speed: 0.4 + Math.random() * 1.4,
       char: CHARS[Math.floor(Math.random() * CHARS.length)],
-      // Beyaz baş + gri kuyruk simülasyonu için baş opacity'si yüksek tutuluyor
-      headOpacity: 0.12 + Math.random() * 0.18,
-      trailOpacity: 0.04 + Math.random() * 0.06
+      // Belirgin parlak baş + soluk gri kuyruk
+      headOpacity: 0.55 + Math.random() * 0.35,
+      trailOpacity: 0.12 + Math.random() * 0.16
     };
   }
 
@@ -54,8 +54,9 @@
       return;
     }
 
-    // Önceki frame'in üzerine yarı saydam siyah çizerek fade-trail oluştur
-    ctx.fillStyle = "rgba(8, 8, 9, 0.085)";
+    // Önceki frame'in üzerine yarı saydam siyah çizerek fade-trail oluştur.
+    // Daha düşük opaklık → daha uzun, görünür kuyruk.
+    ctx.fillStyle = "rgba(8, 9, 11, 0.055)";
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 
     ctx.font = `${FONT_SIZE}px "JetBrains Mono", ui-monospace, monospace`;
@@ -65,20 +66,20 @@
       const drop = drops[i];
       const x = i * FONT_SIZE;
 
-      // Kuyruk: çoğunlukla saydam orta gri
+      // Kuyruk: orta gri (krom tonu)
       if (drop.y - FONT_SIZE > 0) {
-        ctx.fillStyle = `rgba(180, 180, 190, ${drop.trailOpacity})`;
+        ctx.fillStyle = `rgba(170, 176, 184, ${drop.trailOpacity})`;
         ctx.fillText(drop.char, x, drop.y - FONT_SIZE);
       }
 
-      // Baş: parlak, neredeyse beyaz
-      ctx.fillStyle = `rgba(235, 235, 240, ${drop.headOpacity})`;
+      // Baş: parlak beyaz (krom highlight)
+      ctx.fillStyle = `rgba(245, 246, 247, ${drop.headOpacity})`;
       ctx.fillText(drop.char, x, drop.y);
 
       drop.y += drop.speed;
 
       // Karakteri ara sıra değiştir — canlılık
-      if (Math.random() < 0.04) {
+      if (Math.random() < 0.045) {
         drop.char = CHARS[Math.floor(Math.random() * CHARS.length)];
       }
 

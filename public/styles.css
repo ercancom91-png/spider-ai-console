@@ -1,6 +1,7 @@
 /* ============================================================
-   SPIDER AI — Corporate Surveillance Console (v0.4)
-   Palette: black / gunmetal / chrome / crimson + brushed metal.
+   SPIDER AI — Corporate Surveillance Console (v0.5)
+   Palette: pure metallic monochrome — soğuk, maskülen, krom.
+   Hiçbir renk yok; siyah, gunmetal, çelik gri, beyaz.
    Fonts: Sora (display) · Inter (body) · JetBrains Mono (data)
    ============================================================ */
 
@@ -23,12 +24,21 @@
   --steel-700:  #2e3137;
   --steel-800:  #1a1d22;
 
-  --red:        #d62828;
-  --red-2:      #b91c2a;
-  --red-3:      #8a1320;
-  --red-soft:   rgba(214, 40, 40, 0.10);
+  /* Eski --red değişkenleri krom vurgusuna remap edildi.
+     Tüm rengin kaynağı bu üç token: --accent / --accent-2 / --accent-3.
+     Kırmızı yok — soğuk metalik beyaz/gri tonları. */
+  --accent:     #e7eaf0;       /* parlak krom */
+  --accent-2:   #aab0b8;       /* gunmetal */
+  --accent-3:   #5c6168;       /* gölgeli çelik */
+  --accent-soft:rgba(231, 234, 240, 0.08);
 
-  --ok:         #38a169;
+  /* Geri uyumluluk için --red ailesi accent'e bağlandı. */
+  --red:        var(--accent);
+  --red-2:      var(--accent-2);
+  --red-3:      var(--accent-3);
+  --red-soft:   var(--accent-soft);
+
+  --ok:         #c8ccd1;
 
   /* JS legacy aliases */
   --silk:       var(--steel-100);
@@ -36,11 +46,11 @@
   --silk-dim:   rgba(216, 219, 224, 0.62);
   --silk-faint: rgba(216, 219, 224, 0.34);
   --silk-ghost: rgba(216, 219, 224, 0.14);
-  --venom:      var(--red);
-  --venom-2:    var(--red-2);
-  --venom-deep: var(--red-3);
-  --threat:     var(--red);
-  --threat-2:   var(--red-3);
+  --venom:      var(--accent);
+  --venom-2:    var(--accent-2);
+  --venom-deep: var(--accent-3);
+  --threat:     var(--accent);
+  --threat-2:   var(--accent-3);
   --moss:       var(--steel-300);
 
   --display: "Sora", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -62,7 +72,7 @@
 }
 
 * { box-sizing: border-box; }
-*::selection { background: rgba(214, 40, 40, 0.32); color: var(--steel-100); }
+*::selection { background: rgba(231, 234, 240, 0.22); color: var(--ink); }
 
 html, body {
   margin: 0;
@@ -78,7 +88,7 @@ html, body {
 
 body {
   background:
-    radial-gradient(ellipse 90% 60% at 50% 0%,  rgba(214,40,40,0.04), transparent 60%),
+    radial-gradient(ellipse 90% 60% at 50% 0%,  rgba(231,234,240,0.04), transparent 60%),
     radial-gradient(ellipse 100% 80% at 50% 100%, rgba(200,204,209,0.025), transparent 60%),
     var(--ink);
   overflow-x: hidden;
@@ -103,8 +113,9 @@ body { isolation: isolate; }
   height: 100vh;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.55;
-  mix-blend-mode: screen;
+  /* mix-blend-mode kaldırıldı — koyu zemine karşı blend nedeniyle harfler
+     görünmüyordu. Düz overlay, %85 opaklık ile direkt çiziliyor. */
+  opacity: 0.85;
   background: var(--ink);
 }
 
@@ -125,7 +136,7 @@ body { isolation: isolate; }
 }
 .geo-backdrop .strands.faint { animation: webBreath 22s ease-in-out infinite reverse; }
 .geo-backdrop .dew circle {
-  filter: drop-shadow(0 0 6px rgba(214,40,40,0.4));
+  filter: drop-shadow(0 0 6px rgba(231,234,240,0.4));
   animation: dewPulse 5.6s ease-in-out infinite;
 }
 .geo-backdrop .dew circle:nth-child(odd)  { animation-delay: -1.4s; }
@@ -541,7 +552,7 @@ body { isolation: isolate; }
   background-clip: text !important;
 }
 
-.field:focus-within { background: rgba(214, 40, 40, 0.04); }
+.field:focus-within { background: rgba(231, 234, 240, 0.04); }
 .field:focus-within > span { color: var(--red); }
 
 .search-row {
@@ -612,22 +623,27 @@ body { isolation: isolate; }
   letter-spacing: 0.14em;
 }
 
+/* Brushed gunmetal düğme — soğuk metalik */
 .primary-button {
-  background: linear-gradient(180deg, var(--red) 0%, var(--red-2) 100%);
+  background: linear-gradient(180deg, #2a2e34 0%, #1a1d22 50%, #0f1216 100%);
   color: var(--steel-100);
-  border: 1px solid var(--red-2);
+  border: 1px solid var(--steel-500);
   overflow: hidden;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.18),
-    0 8px 18px -10px rgba(214,40,40,0.55);
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    inset 0 -1px 0 rgba(0,0,0,0.5),
+    0 8px 18px -10px rgba(0,0,0,0.7);
 }
 .primary-button:hover {
   transform: translateY(-1px);
-  background: linear-gradient(180deg, #e53939 0%, var(--red) 100%);
-  border-color: var(--red);
+  background: linear-gradient(180deg, #3a3f47 0%, #232830 50%, #14181d 100%);
+  border-color: var(--steel-300);
+  color: #ffffff;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.24),
-    0 12px 22px -10px rgba(214,40,40,0.7);
+    inset 0 1px 0 rgba(255,255,255,0.22),
+    inset 0 -1px 0 rgba(0,0,0,0.55),
+    0 14px 28px -12px rgba(0,0,0,0.85),
+    0 0 0 1px rgba(231,234,240,0.08);
 }
 .primary-button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .primary-button-glow {
@@ -976,7 +992,7 @@ body { isolation: isolate; }
   animation: cardIn .55s cubic-bezier(.2,.7,.2,1) both;
 }
 .result-card:hover {
-  background: rgba(214,40,40,0.04);
+  background: rgba(231,234,240,0.04);
   border-color: var(--pane-edge-3);
   transform: translateY(-1px);
   box-shadow: 0 6px 18px -10px rgba(0,0,0,0.65);
@@ -1653,7 +1669,7 @@ body { isolation: isolate; }
   font-size: 24px;
   color: var(--red);
   margin-bottom: 4px;
-  filter: drop-shadow(0 0 12px rgba(214,40,40,0.4));
+  filter: drop-shadow(0 0 12px rgba(231,234,240,0.4));
 }
 
 /* ---------- Premium ---------- */
@@ -1663,7 +1679,7 @@ body { isolation: isolate; }
   padding: 28px 32px;
   border: 1px solid var(--pane-edge-2);
   background:
-    linear-gradient(135deg, rgba(214,40,40,0.04), transparent 50%),
+    linear-gradient(135deg, rgba(231,234,240,0.04), transparent 50%),
     var(--metal-fill);
   box-shadow: var(--shadow-soft);
 }
@@ -1710,7 +1726,7 @@ body { isolation: isolate; }
   gap: 10px;
   padding: 24px 0;
 }
-.lock-icon { font-size: 28px; color: var(--red); filter: drop-shadow(0 0 12px rgba(214,40,40,0.4)); }
+.lock-icon { font-size: 28px; color: var(--red); filter: drop-shadow(0 0 12px rgba(231,234,240,0.4)); }
 .premium-locked strong { font-family: var(--display); font-weight: 600; font-size: 18px; color: var(--steel-100); }
 .premium-locked span {
   font-family: var(--mono);
