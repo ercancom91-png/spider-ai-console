@@ -153,6 +153,12 @@ export async function runSearchProviders(subject, options = {}) {
   };
 }
 
+// Render request timeout sınırına yakalanmamak için her provider'a hard
+// timeout uyguluyoruz. Bir provider 35 sn içinde dönmezse "timeout" olarak
+// işaretlenir; diğerleri etkilenmeden devam eder. Böylece tek bir takılan
+// provider tüm aramayı bitiremez bırakmıyor.
+const PROVIDER_TIMEOUT_MS = 35_000;
+
 async function runWithConcurrency(providers, concurrency) {
   const results = new Array(providers.length);
   let cursor = 0;
@@ -163,7 +169,7 @@ async function runWithConcurrency(providers, concurrency) {
       cursor += 1;
       const provider = providers[index];
       try {
-        const value = await provider.run();
+        const value = await withTimeout(provider.run(), PROVIDER_TIMEOUT_MS, provider.name);
         results[index] = { status: "fulfilled", value };
       } catch (error) {
         results[index] = { status: "rejected", reason: error };
@@ -174,4 +180,12 @@ async function runWithConcurrency(providers, concurrency) {
   const workers = Array.from({ length: Math.min(concurrency, providers.length) }, () => worker());
   await Promise.all(workers);
   return results;
+}
+
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} provider ${ms / 1000}sn içinde cevap vermedi`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
