@@ -3,407 +3,313 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SPIDER AI — Dijital Varlık İstihbaratı</title>
-    <meta name="color-scheme" content="dark" />
+    <title>SPIDER AI — Dijital Ayak İzi</title>
+    <meta name="color-scheme" content="light" />
     <meta
       name="description"
-      content="SPIDER AI — izin tabanlı dijital varlık istihbarat platformu. Kanıt tabanlı, çok-kanıt birleşmeli kimlik eşleştirme."
+      content="SPIDER AI — açık kaynaklarda dijital ayak izinizi haritalayın. İzin tabanlı, kanıt zorunluluklu."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
     />
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
-    <!-- Realistic web canvas: layered SVG with irregular threads + dewdrops + ambient light -->
-    <div class="geo-backdrop" aria-hidden="true">
-      <svg class="web" viewBox="0 0 1600 1100" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <radialGradient id="webHaze" cx="50%" cy="55%" r="65%">
-            <stop offset="0%" stop-color="rgba(245,246,247,0.06)" />
-            <stop offset="55%" stop-color="rgba(245,246,247,0.015)" />
-            <stop offset="100%" stop-color="rgba(0,0,0,0)" />
-          </radialGradient>
-          <radialGradient id="webCore" cx="50%" cy="55%" r="22%">
-            <stop offset="0%" stop-color="rgba(231,234,240,0.18)" />
-            <stop offset="60%" stop-color="rgba(231,234,240,0.03)" />
-            <stop offset="100%" stop-color="rgba(0,0,0,0)" />
-          </radialGradient>
-          <linearGradient id="strandLight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stop-color="rgba(200,204,209,0.04)" />
-            <stop offset="50%"  stop-color="rgba(200,204,209,0.28)" />
-            <stop offset="100%" stop-color="rgba(200,204,209,0.04)" />
-          </linearGradient>
-          <linearGradient id="strandFaint" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stop-color="rgba(200,204,209,0.02)" />
-            <stop offset="50%"  stop-color="rgba(200,204,209,0.14)" />
-            <stop offset="100%" stop-color="rgba(200,204,209,0.02)" />
-          </linearGradient>
-          <filter id="blur1"><feGaussianBlur stdDeviation="0.4"/></filter>
-        </defs>
-
-        <rect width="1600" height="1100" fill="url(#webHaze)" />
-        <circle cx="800" cy="605" r="380" fill="url(#webCore)" />
-
-        <!-- Outer faint strands (background) -->
-        <g class="strands faint" stroke="url(#strandFaint)" stroke-width="0.45" fill="none">
-          <path d="M800 605 Q650 320 80 80" />
-          <path d="M800 605 Q580 280 380 30" />
-          <path d="M800 605 Q820 270 840 -20" />
-          <path d="M800 605 Q1080 280 1230 30" />
-          <path d="M800 605 Q1240 320 1540 60" />
-          <path d="M800 605 Q1340 400 1640 380" />
-          <path d="M800 605 Q1380 600 1660 700" />
-          <path d="M800 605 Q1320 870 1540 1080" />
-          <path d="M800 605 Q1100 900 1180 1140" />
-          <path d="M800 605 Q800 880 800 1180" />
-          <path d="M800 605 Q500 900 380 1140" />
-          <path d="M800 605 Q300 870 20 1080" />
-          <path d="M800 605 Q260 720 -40 720" />
-          <path d="M800 605 Q260 480 -30 380" />
-        </g>
-
-        <!-- Main bright strands -->
-        <g class="strands main" stroke="url(#strandLight)" stroke-width="0.7" fill="none">
-          <line x1="800" y1="605" x2="50" y2="50" />
-          <line x1="800" y1="605" x2="400" y2="20" />
-          <line x1="800" y1="605" x2="800" y2="-30" />
-          <line x1="800" y1="605" x2="1200" y2="20" />
-          <line x1="800" y1="605" x2="1560" y2="60" />
-          <line x1="800" y1="605" x2="1640" y2="380" />
-          <line x1="800" y1="605" x2="1660" y2="700" />
-          <line x1="800" y1="605" x2="1560" y2="1080" />
-          <line x1="800" y1="605" x2="1180" y2="1140" />
-          <line x1="800" y1="605" x2="800" y2="1180" />
-          <line x1="800" y1="605" x2="380" y2="1140" />
-          <line x1="800" y1="605" x2="20" y2="1080" />
-          <line x1="800" y1="605" x2="-40" y2="720" />
-          <line x1="800" y1="605" x2="-30" y2="380" />
-        </g>
-
-        <!-- Concentric organic web rings (slight wobble) -->
-        <g class="rings" stroke="rgba(200,204,209,0.13)" fill="none" stroke-width="0.6">
-          <path d="M680,605 Q800,510 920,605 Q800,690 680,605 Z" filter="url(#blur1)"/>
-          <path d="M560,605 Q800,425 1040,605 Q800,778 560,605 Z"/>
-          <path d="M420,605 Q800,330 1180,605 Q800,870 420,605 Z"/>
-          <path d="M260,605 Q800,225 1340,605 Q800,975 260,605 Z" stroke="rgba(200,204,209,0.10)"/>
-          <path d="M80,605 Q800,120 1520,605 Q800,1080 80,605 Z" stroke="rgba(200,204,209,0.07)"/>
-        </g>
-
-        <!-- Tangential cross-strands (like real orb webs) -->
-        <g stroke="rgba(200,204,209,0.10)" stroke-width="0.5" fill="none" stroke-dasharray="3 6">
-          <path d="M620 470 L980 470" />
-          <path d="M540 605 L1060 605" />
-          <path d="M620 740 L980 740" />
-          <path d="M520 380 L1080 830" />
-          <path d="M520 830 L1080 380" />
-        </g>
-
-        <!-- Broken / torn strand -->
-        <g stroke="rgba(200,204,209,0.18)" stroke-width="0.55" fill="none">
-          <path d="M210 230 L340 310 L420 310" />
-          <path d="M460 280 L520 320" />
-        </g>
-
-        <!-- Dewdrops (multi-color) -->
-        <g class="dew">
-          <circle cx="800" cy="605" r="2.6" class="dew-core" fill="rgba(231,234,240,0.95)" />
-          <circle cx="676" cy="513" r="1.4" fill="rgba(216,219,224,0.90)" />
-          <circle cx="930" cy="525" r="1.2" fill="rgba(216,219,224,0.85)" />
-          <circle cx="555" cy="700" r="1.3" fill="rgba(216,219,224,0.85)" />
-          <circle cx="1050" cy="700" r="1.5" fill="rgba(231,234,240,0.85)" />
-          <circle cx="800" cy="425" r="1.2" fill="rgba(216,219,224,0.85)" />
-          <circle cx="800" cy="785" r="1.3" fill="rgba(216,219,224,0.80)" />
-          <circle cx="430" cy="380" r="1.0" fill="rgba(216,219,224,0.65)" />
-          <circle cx="1200" cy="380" r="1.0" fill="rgba(216,219,224,0.65)" />
-          <circle cx="1200" cy="830" r="1.1" fill="rgba(231,234,240,0.65)" />
-          <circle cx="430" cy="830" r="1.1" fill="rgba(216,219,224,0.65)" />
-          <circle cx="610" cy="220" r="0.9" fill="rgba(216,219,224,0.50)" />
-          <circle cx="1010" cy="220" r="0.9" fill="rgba(216,219,224,0.50)" />
-          <circle cx="320" cy="540" r="1.0" fill="rgba(216,219,224,0.55)" />
-          <circle cx="1280" cy="540" r="1.0" fill="rgba(216,219,224,0.55)" />
-        </g>
-
-        <!-- Subtle ambient light points -->
-        <g fill="rgba(231,234,240,0.5)" filter="url(#blur1)">
-          <circle cx="240" cy="170" r="3"/>
-          <circle cx="1380" cy="900" r="3"/>
-        </g>
-      </svg>
-
-      <span class="vignette"></span>
-      <span class="grain"></span>
-      <span class="scanline"></span>
-    </div>
-
-    <header class="app-bar">
-      <a class="brand" href="/" aria-label="SPIDER AI">
-        <span class="brand-mark" aria-hidden="true">
-          <img src="/favicon.svg" alt="" width="36" height="36" />
+  <body data-theme="light">
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <a href="#" class="brand" data-tab-link="home" aria-label="SPIDER AI Anasayfa">
+        <span class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="13" cy="13" r="9" stroke="currentColor" stroke-width="2.4" />
+            <line x1="19.5" y1="19.5" x2="27.5" y2="27.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+            <circle cx="13" cy="13" r="2.6" fill="currentColor" />
+            <line x1="13" y1="6.5" x2="13" y2="3" stroke="currentColor" stroke-width="1" opacity="0.5" />
+            <line x1="13" y1="19.5" x2="13" y2="23" stroke="currentColor" stroke-width="1" opacity="0.5" />
+            <line x1="6.5" y1="13" x2="3" y2="13" stroke="currentColor" stroke-width="1" opacity="0.5" />
+            <line x1="19.5" y1="13" x2="23" y2="13" stroke="currentColor" stroke-width="1" opacity="0.5" />
+            <line x1="8" y1="8" x2="5.5" y2="5.5" stroke="currentColor" stroke-width="0.8" opacity="0.4" />
+            <line x1="18" y1="8" x2="20.5" y2="5.5" stroke="currentColor" stroke-width="0.8" opacity="0.4" />
+          </svg>
         </span>
-        <div class="brand-text">
-          <strong>SPIDER<span class="accent">AI</span></strong>
-          <span>Dijital Varlık İstihbaratı</span>
-        </div>
+        <span class="brand-text">
+          <strong>SPIDER<span class="brand-dot">.</span>AI</strong>
+          <em>Dijital Ayak İzi</em>
+        </span>
       </a>
 
-      <nav class="bar-status" aria-label="Durum">
-        <span class="status-dot live" aria-hidden="true"></span>
-        <span class="status-text">Sistem Aktif</span>
-        <span class="bar-divider" aria-hidden="true"></span>
+      <nav class="nav-tabs" aria-label="Ana navigasyon">
+        <button type="button" class="nav-tab active" data-tab="home">Anasayfa</button>
+        <button type="button" class="nav-tab" data-tab="about">Hakkında</button>
+        <button type="button" class="nav-tab" data-tab="sources">Kaynaklar</button>
+      </nav>
+
+      <div class="topbar-meta">
+        <span class="status-pill"><span class="status-dot"></span>Aktif</span>
         <span id="index-pill" class="meta-pill">—</span>
         <span id="ai-pill" class="meta-pill">—</span>
         <button id="license-toggle" class="license-button" type="button" aria-label="Lisans" hidden>
           <span class="license-dot"></span>
           <span id="license-label">Standart</span>
         </button>
-      </nav>
+      </div>
     </header>
 
-    <main class="shell">
-      <!-- HERO: tek kolon yığın, alttaki üç sütun pillar -->
-      <section class="hero">
-        <p class="eyebrow">
-          <span class="eyebrow-dot" aria-hidden="true"></span>
-          14 Arama Motoru · 60+ Profil Sondası · Çok-Kanıt Doğrulaması
-        </p>
-        <h1>
-          Dijital varlığınızı
-          <span class="word-highlight">baştan sona</span>
-          haritalayın.
-        </h1>
-        <p class="hero-lede">
-          E-posta, telefon, kullanıcı adı veya tam isim — tek bir kimlik için açık kaynaklarda
-          birleşen kanıtları tespit eder, varsayım üretmez.
-          <span class="silk">Yalnızca doğrulanmış sonuçlar görünür.</span>
-        </p>
+    <main class="views">
+      <!-- ============================================================
+           ANASAYFA — Hero search + results layout
+           ============================================================ -->
+      <section data-view="home" class="view view-active">
+        <div class="hero-search">
+          <h1 class="hero-title">
+            Dijital ayak izinizi <span class="accent-highlight">haritalayın</span>.
+          </h1>
+          <p class="hero-sub">
+            İsim, telefon, e-posta veya kullanıcı adı — 800+ açık kaynakta birleşen kanıtları tespit eder, varsayım üretmez.
+          </p>
 
-        <ul class="hero-pillars" aria-label="İlkeler">
-          <li>
-            <span class="pillar-num">01</span>
-            <strong>İzin Tabanlı Erişim</strong>
-            <p>Yalnızca size ait veya yetkili olduğunuz kimlikler için kullanılır.</p>
-          </li>
-          <li>
-            <span class="pillar-num">02</span>
-            <strong>Kanıt Zorunluluğu</strong>
-            <p>En az bir tanımlayıcının birebir eşleştiği sonuçlar listelenir.</p>
-          </li>
-          <li>
-            <span class="pillar-num">03</span>
-            <strong>Yerel Veri Sahipliği</strong>
-            <p>Tüm indeks bu cihazda kalır; üçüncü tarafa veri aktarılmaz.</p>
-          </li>
-        </ul>
-      </section>
+          <form id="search-form" class="search-card" autocomplete="off" novalidate>
+            <div class="search-grid">
+              <label class="field">
+                <span>Ad Soyad</span>
+                <input name="fullName" type="text" placeholder="Örn. Ayşe Demir"
+                  autocomplete="off" autocorrect="off" autocapitalize="words"
+                  spellcheck="false" data-form-type="other" />
+              </label>
+              <label class="field">
+                <span>E-posta</span>
+                <input name="email" type="text" inputmode="email" placeholder="ornek@kurum.com"
+                  autocomplete="off" autocorrect="off" autocapitalize="off"
+                  spellcheck="false" data-form-type="other" />
+              </label>
+              <label class="field">
+                <span>Telefon</span>
+                <input name="phone" type="text" inputmode="tel" placeholder="555 000 00 00"
+                  autocomplete="off" autocorrect="off" autocapitalize="off"
+                  spellcheck="false" data-form-type="other" />
+              </label>
+              <label class="field">
+                <span>Kullanıcı Adı</span>
+                <input name="username" type="text" placeholder="@kullaniciadi"
+                  autocomplete="off" autocorrect="off" autocapitalize="off"
+                  spellcheck="false" data-form-type="other" />
+              </label>
+            </div>
 
-      <section class="console" aria-labelledby="console-title">
-        <header class="console-head">
-          <span class="console-tag" id="console-title">Soruşturma Penceresi</span>
-          <span class="console-coord">Oturum · Yerel · Şifrelenmiş</span>
-        </header>
-
-        <form id="search-form" class="search-panel" autocomplete="off" novalidate>
-          <div class="search-grid">
-            <label class="field">
-              <span>Ad Soyad</span>
-              <input
-                name="fullName"
-                type="text"
-                placeholder="Örn. Ayşe Demir"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="words"
-                spellcheck="false"
-                data-form-type="other"
-              />
-            </label>
-            <label class="field">
-              <span>E-posta Adresi</span>
-              <input
-                name="email"
-                type="text"
-                inputmode="email"
-                placeholder="ornek@kurum.com"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="off"
-                spellcheck="false"
-                data-form-type="other"
-              />
-            </label>
-            <label class="field">
-              <span>Telefon Numarası</span>
-              <input
-                name="phone"
-                type="text"
-                inputmode="tel"
-                placeholder="555 000 00 00"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="off"
-                spellcheck="false"
-                data-form-type="other"
-              />
-            </label>
-            <label class="field">
-              <span>Kullanıcı Adı</span>
-              <input
-                name="username"
-                type="text"
-                placeholder="@kullaniciadi"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="off"
-                spellcheck="false"
-                data-form-type="other"
-              />
-            </label>
-          </div>
-
-          <div class="search-row">
-            <label class="field compact">
-              <span>Kapsam</span>
-              <select name="scanDepth">
-                <option value="balanced">Standart</option>
-                <option value="wide" selected>Genişletilmiş</option>
-                <option value="maximum">Derinleştirilmiş</option>
-              </select>
-            </label>
-            <label class="field compact">
-              <span>Hassas Kaynaklar</span>
-              <select name="includeSensitiveSources">
-                <option value="false" selected>Hariç Tut</option>
-                <option value="true">Dahil Et</option>
-              </select>
-            </label>
-            <label class="field compact photo-field" hidden>
-              <span>Referans Görsel</span>
-              <input id="photo" name="photo" type="file" accept="image/*" />
-            </label>
-            <div class="search-actions">
+            <div class="search-row">
+              <label class="field compact">
+                <span>Kapsam</span>
+                <select name="scanDepth">
+                  <option value="balanced">Standart</option>
+                  <option value="wide" selected>Genişletilmiş</option>
+                  <option value="maximum">Derinleştirilmiş</option>
+                </select>
+              </label>
+              <label class="field compact">
+                <span>Hassas Kaynaklar</span>
+                <select name="includeSensitiveSources">
+                  <option value="false" selected>Hariç Tut</option>
+                  <option value="true">Dahil Et</option>
+                </select>
+              </label>
+              <label class="field compact photo-field" hidden>
+                <span>Referans Görsel</span>
+                <input id="photo" name="photo" type="file" accept="image/*" />
+              </label>
               <button type="submit" id="submit-button" class="primary-button">
-                <span class="primary-button-glow" aria-hidden="true"></span>
                 <span class="primary-button-label">Aramayı Başlat</span>
                 <span class="primary-button-arrow" aria-hidden="true">→</span>
               </button>
             </div>
+            <p id="form-status" class="form-status" role="status"></p>
+          </form>
+        </div>
+
+        <section id="progress-panel" class="progress-panel" hidden>
+          <div class="progress-head">
+            <strong id="progress-title">Motorlar Çalıştırılıyor</strong>
+            <span id="progress-percent" class="progress-percent">0%</span>
           </div>
-          <p id="form-status" class="form-status" role="status"></p>
-        </form>
-      </section>
-
-      <section id="progress-panel" class="progress-panel" hidden>
-        <div class="progress-head">
-          <strong id="progress-title">Motorlar Çalıştırılıyor</strong>
-          <span id="progress-percent" class="progress-percent">0%</span>
-        </div>
-        <div class="progress-track">
-          <div id="progress-fill" class="progress-fill"></div>
-        </div>
-        <ul id="progress-engines" class="progress-engines"></ul>
-      </section>
-
-      <section id="results-section" class="results-section" aria-live="polite" hidden>
-        <header class="results-header">
-          <div class="results-title">
-            <span class="results-eyebrow">Tespit Edilen Sinyaller</span>
-            <h2 id="result-title">Hazır.</h2>
-            <p id="result-subtitle" class="result-subtitle"></p>
+          <div class="progress-track">
+            <div id="progress-fill" class="progress-fill"></div>
           </div>
-          <div id="summary-metrics" class="summary-metrics"></div>
-        </header>
+          <ul id="progress-engines" class="progress-engines"></ul>
+        </section>
 
-        <div id="ai-brief" class="ai-brief"></div>
-        <div id="phone-insight" class="phone-insight" hidden></div>
+        <!-- Results: 2-column layout (filters left, content right) -->
+        <section id="results-section" class="results-section" aria-live="polite" hidden>
+          <div class="results-layout">
+            <aside class="filters-side">
+              <div id="filter-bar" class="filter-bar" hidden>
+                <div class="filter-group">
+                  <h3>Eşleşme Kademesi</h3>
+                  <div id="tier-chips" class="filter-list" role="tablist" aria-label="Eşleşme Kademesi"></div>
+                </div>
+                <div class="filter-group">
+                  <h3>Kategori</h3>
+                  <div id="category-chips" class="filter-list" role="tablist" aria-label="Kategori"></div>
+                </div>
+                <div class="filter-group" id="subcategory-panel" hidden>
+                  <h3 id="subcategory-title">Alt Kategori</h3>
+                  <ul id="subcategory-list" class="filter-sublist"></ul>
+                </div>
+                <div class="filter-group">
+                  <h3>Sıralama</h3>
+                  <select id="sort-select" class="filter-select">
+                    <option value="tier">Kademe</option>
+                    <option value="score">Skor</option>
+                    <option value="source">Kaynak</option>
+                    <option value="recent">Yeni</option>
+                  </select>
+                </div>
+              </div>
+            </aside>
 
-        <div id="filter-bar" class="filter-bar" hidden>
-          <div id="tier-chips" class="chip-row" role="tablist" aria-label="Eşleşme Kademesi"></div>
-          <div id="category-chips" class="chip-row subtle" role="tablist" aria-label="Kategori"></div>
-          <div class="sort-control">
-            <label for="sort-select">Sıralama</label>
-            <select id="sort-select">
-              <option value="tier">Kademe</option>
-              <option value="score">Skor</option>
-              <option value="source">Kaynak</option>
-              <option value="recent">Yeni</option>
-            </select>
+            <div class="results-main">
+              <header class="results-header">
+                <div class="results-title">
+                  <span class="results-eyebrow">Tespit Edilen Sinyaller</span>
+                  <h2 id="result-title">Hazır.</h2>
+                  <p id="result-subtitle" class="result-subtitle"></p>
+                </div>
+                <div id="summary-metrics" class="summary-metrics"></div>
+              </header>
+
+              <div id="ai-brief" class="ai-brief"></div>
+              <div id="phone-insight" class="phone-insight" hidden></div>
+
+              <ol id="results" class="result-list">
+                <li class="empty-state">
+                  <span class="empty-glyph" aria-hidden="true">⌕</span>
+                  <strong>Henüz sonuç yok.</strong>
+                  <span>Bir kimlik bilgisi girin ve aramayı başlatın.</span>
+                </li>
+              </ol>
+
+              <section id="scanned-sources" class="scanned-sources" hidden></section>
+              <section id="scanned-candidates" class="scanned-candidates" hidden></section>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div class="results-body">
-          <aside id="subcategory-panel" class="subcategory-panel" hidden>
-            <header>
-              <span class="eyebrow" id="subcategory-title">Alt Kategori</span>
-            </header>
-            <ul id="subcategory-list"></ul>
-          </aside>
-
-          <ol id="results" class="result-list">
-            <li class="empty-state">
-              <span class="empty-glyph" aria-hidden="true">◆</span>
-              <strong>Henüz sonuç yok.</strong>
-              <span>Bir kimlik bilgisi girin ve aramayı başlatın.</span>
-            </li>
-          </ol>
-        </div>
-
-        <section id="scanned-sources" class="scanned-sources" hidden></section>
-        <section id="scanned-candidates" class="scanned-candidates" hidden></section>
-      </section>
-
-      <section id="premium-section" class="premium-section" hidden>
-        <header class="premium-header">
-          <div>
-            <p class="eyebrow copper">Premium Modül</p>
-            <h2>Arşivden Geri Çağrılan Görseller · Yüz Doğrulama</h2>
+        <section id="premium-section" class="premium-section" hidden>
+          <header class="premium-header">
+            <div>
+              <span class="eyebrow">Premium · Yetkili Kullanıcı</span>
+              <h3>Yetkin Olduğun Kimlikler İçin Görsel Yeniden Tarama</h3>
+            </div>
+            <span id="premium-status" class="premium-status locked">Kilitli</span>
+          </header>
+          <div id="premium-body" class="premium-body locked">
             <p>
-              Wayback arşivleri, önbellek katmanları ve açık erişimli arşivler taranır.
-              Yüz doğrulamasından geçmeyen görsel sunulmaz.
+              Premium katman, izin verdiğiniz dijital varlık için silinmiş veya gizlenmiş görselleri
+              yeniden bulup yüz benzerliği ile doğrular. Açmak için lisans anahtarı girin.
             </p>
+            <div class="premium-actions">
+              <button type="button" class="ghost-button" data-premium-action="open-license">Lisans Anahtarı</button>
+              <button type="button" class="primary-button" data-premium-action="run-photos" disabled>Görsel Aramayı Çalıştır</button>
+            </div>
           </div>
-          <span id="premium-status" class="premium-status locked">Kilitli</span>
-        </header>
+        </section>
+      </section>
 
-        <div id="premium-body" class="premium-body locked">
-          <div class="premium-locked">
-            <div class="lock-icon" aria-hidden="true">◇</div>
-            <strong>Premium lisans ile etkinleştirin</strong>
-            <span>Sağ üst köşedeki lisans rozetinden anahtar girebilirsiniz.</span>
+      <!-- ============================================================
+           HAKKINDA
+           ============================================================ -->
+      <section data-view="about" class="view" hidden>
+        <div class="static-page">
+          <header class="static-head">
+            <h1>Hakkında</h1>
+            <p class="lead">
+              SPIDER AI; açık kaynaklarda dijital ayak izinizi tespit eden, kanıt zorunluluklu, yerel çalışan bir istihbarat aracıdır.
+              Tek amaç: <strong>sizin yetkili olduğunuz</strong> kimliğin internete dağılan parçalarını bulup geri toplamanız.
+            </p>
+          </header>
+
+          <div class="static-grid">
+            <article class="static-card">
+              <span class="static-num">01</span>
+              <h2>İzin tabanlı erişim</h2>
+              <p>Yalnızca size ait veya hakkında yetki sahibi olduğunuz kimlikler için kullanılır. Yetkisiz takip, ifşa, doxxing kullanım koşullarına aykırıdır.</p>
+            </article>
+            <article class="static-card">
+              <span class="static-num">02</span>
+              <h2>Kanıt zorunluluğu</h2>
+              <p>Bir sonuç ancak isim soyisim, telefon veya e-postadan en az birinin birebir eşleştiği durumlarda listelenir. Kullanıcı adı yardımcı sinyal sayılır.</p>
+            </article>
+            <article class="static-card">
+              <span class="static-num">03</span>
+              <h2>Yerel veri sahipliği</h2>
+              <p>Aramaya konu kimlik bilgileri sunucu disk loguna yazılmaz. Yerel SQLite indeksi tarafınızca seed verilen sayfaları sadece bu cihazda tutar.</p>
+            </article>
+            <article class="static-card">
+              <span class="static-num">04</span>
+              <h2>Çok katmanlı doğrulama</h2>
+              <p>Hand-tuned 150 platform API'si + WhatsMyName 600+ site katalogu (iki taraflı doğrulama) + holehe-style e-posta probe + libphonenumber telefon analizi.</p>
+            </article>
+            <article class="static-card">
+              <span class="static-num">05</span>
+              <h2>Kaldırma yönergeleri</h2>
+              <p>Her bulunan kayda Facebook/Instagram/X/GitHub/TikTok hesap silme akışlarına direkt bağlantı + KVKK/GDPR talep şablonu eklenir.</p>
+            </article>
+            <article class="static-card">
+              <span class="static-num">06</span>
+              <h2>Yanlış pozitif filtresi</h2>
+              <p>"Denizli" gibi soyad-yer çakışması algılanır; locative kullanım baskınsa eşleşme reddedilir. Self-test ile drift'e uğrayan siteler otomatik devre dışı.</p>
+            </article>
           </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           KAYNAKLAR
+           ============================================================ -->
+      <section data-view="sources" class="view" hidden>
+        <div class="sources-page">
+          <header class="static-head">
+            <h1>Taranan Kaynaklar</h1>
+            <p class="lead">Aramalarda gözden geçirilen tüm platformlar, kategori bazında.</p>
+          </header>
+
+          <div class="sources-controls">
+            <input type="search" id="sources-search" placeholder="Platform veya host ara..." />
+            <span id="sources-count" class="sources-count">— platform</span>
+          </div>
+
+          <div id="sources-grid" class="sources-grid"></div>
         </div>
       </section>
     </main>
 
-    <!-- ========== FOOTER ========== -->
     <footer class="site-foot">
       <div class="foot-inner">
         <div class="foot-brand">
-          <a class="brand small" href="/" aria-label="SPIDER AI">
-            <span class="brand-mark" aria-hidden="true">
-              <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span class="brand small">
+            <span class="brand-logo small" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="13" cy="13" r="9" stroke="currentColor" stroke-width="2.4" />
+                <line x1="19.5" y1="19.5" x2="27.5" y2="27.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+                <circle cx="13" cy="13" r="2.6" fill="currentColor" />
+              </svg>
             </span>
-            <div class="brand-text">
-              <strong>SPIDER<span class="accent">AI</span></strong>
-              <span>Dijital Varlık İstihbaratı</span>
-            </div>
-          </a>
-          <p class="foot-tag">
-            İzin tabanlı, kanıt zorunlu. Doğrulanmamış hiçbir sonuç sunulmaz.
-            KVKK ve GDPR çerçevesinde işler.
-          </p>
+            <span class="brand-text">
+              <strong>SPIDER<span class="brand-dot">.</span>AI</strong>
+              <em>Dijital Ayak İzi</em>
+            </span>
+          </span>
+          <p class="foot-tag">İzin tabanlı, kanıt zorunlu. KVKK ve GDPR çerçevesinde işler.</p>
         </div>
 
         <nav class="foot-cols" aria-label="Footer">
           <div class="foot-col">
             <h4>Platform</h4>
             <ul>
-              <li><a href="#search-form">Arama</a></li>
-              <li><a href="#premium-section">Premium</a></li>
+              <li><button type="button" data-tab-link="home">Anasayfa</button></li>
+              <li><button type="button" data-tab-link="about">Hakkında</button></li>
+              <li><button type="button" data-tab-link="sources">Kaynaklar</button></li>
             </ul>
           </div>
           <div class="foot-col">
@@ -425,23 +331,21 @@
         </nav>
       </div>
 
-      <section id="foot-coverage" class="foot-coverage" hidden></section>
-
       <div class="foot-bottom">
         <span>© 2026 SPIDER AI · Tüm hakları saklıdır.</span>
-        <span class="foot-version">v0.3 · Yerel İndeks · İzin Kapısı Etkin</span>
+        <span class="foot-version">v0.5 · Yerel İndeks · İzin Kapısı Etkin</span>
       </div>
     </footer>
 
-    <!-- ========== COOKIE BANNER ========== -->
+    <!-- COOKIE BANNER -->
     <div id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-title" hidden>
       <div class="cookie-inner">
         <div class="cookie-text">
           <h3 id="cookie-title">Çerezler ve Yerel Depolama</h3>
           <p>
-            SPIDER AI yalnızca platformun çalışması için zorunlu yerel depolama (oturum, tercih, lisans
-            anahtarı) kullanır. Üçüncü taraf izleme veya pazarlama çerezi kullanılmaz. Detaylar için
-            <button type="button" class="link-btn" data-legal="cookies">Çerez Politikası</button> sayfasını inceleyebilirsiniz.
+            SPIDER AI yalnızca platformun çalışması için zorunlu yerel depolama (oturum, tercih, lisans anahtarı) kullanır.
+            Üçüncü taraf izleme veya pazarlama çerezi kullanılmaz. Detaylar için
+            <button type="button" class="link-button" data-legal="cookies">Çerez Politikası</button> sayfasını inceleyebilirsiniz.
           </p>
         </div>
         <div class="cookie-actions">
@@ -452,145 +356,124 @@
       </div>
     </div>
 
-    <!-- ========== ONBOARDING ========== -->
+    <!-- ONBOARDING -->
     <dialog id="onboarding-dialog" class="app-dialog">
       <form method="dialog" class="dialog-form">
-        <span class="dialog-eyebrow">İlk Kullanım Onayı</span>
-        <h2>Hoş geldiniz.</h2>
-        <p>
-          SPIDER AI, yalnızca size ait veya yetkili olduğunuz kimlikler için tasarlanmıştır.
-          Tahmine dayalı profil üretmez; kanıt taşımayan sonuçları sunmaz. KVKK ve GDPR
-          mevzuatı çerçevesinde işler.
-        </p>
-        <ul class="dialog-checklist">
-          <li>Yalnızca yetkili olduğum kimlikler için arama yapacağım.</li>
-          <li>Hassas ve yetişkin kaynaklar varsayılan olarak devre dışıdır.</li>
-          <li>Görsel dosyalar tarayıcıda işlenir; sunucuya yalnızca özet hash iletilir.</li>
-        </ul>
-        <menu>
-          <button value="accept" class="primary-button">
-            <span class="primary-button-label">Onaylıyorum, Devam Et</span>
-            <span class="primary-button-arrow" aria-hidden="true">→</span>
-          </button>
-        </menu>
+        <header class="dialog-head">
+          <span class="dialog-eyebrow">Başlamadan önce</span>
+          <h2>İzin ve Kapsam</h2>
+        </header>
+        <div class="dialog-body">
+          <p>
+            SPIDER AI yalnızca <strong>kendi dijital varlığınız</strong> veya yazılı yetki sahibi olduğunuz üçüncü kişiler için kullanılabilir.
+            Yetkisiz takip, ifşa, doxxing, kimlik hırsızlığı ve şantaj amaçlı kullanım yasaktır.
+          </p>
+          <p>Devam ederek bu kullanım koşullarını kabul ettiğinizi onaylıyorsunuz.</p>
+        </div>
+        <div class="dialog-actions">
+          <button type="submit" class="primary-button" value="ok">Anladım, Devam Et</button>
+        </div>
       </form>
     </dialog>
 
+    <!-- LICENSE -->
     <dialog id="license-dialog" class="app-dialog">
       <form id="license-form" method="dialog" class="dialog-form">
-        <span class="dialog-eyebrow">Lisans Yönetimi</span>
-        <h2>Anahtar Doğrulama</h2>
-        <p>Premium modülleri etkinleştirmek için lisans anahtarınızı girin. Anahtar yalnızca bu cihazda saklanır.</p>
-        <label class="field">
-          <span>Lisans Anahtarı</span>
-          <input id="license-key-input" name="key" type="text" placeholder="SPDR-XXXX-XXXX-XXXX"
-            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" />
-        </label>
-        <p id="license-feedback" class="license-feedback" role="status"></p>
-        <menu>
-          <button value="cancel" class="ghost-button" formnovalidate>Kapat</button>
+        <header class="dialog-head">
+          <span class="dialog-eyebrow">Premium</span>
+          <h2>Lisans Anahtarı</h2>
+        </header>
+        <div class="dialog-body">
+          <label class="field">
+            <span>Anahtar</span>
+            <input id="license-key-input" name="key" type="text" placeholder="SPDR-XXXX-XXXX-XXXX"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+          </label>
+          <p id="license-feedback" class="license-feedback" role="status"></p>
+        </div>
+        <div class="dialog-actions">
+          <button value="cancel" class="ghost-button" formnovalidate>İptal</button>
           <button value="clear" id="license-clear" class="ghost-button" formnovalidate>Temizle</button>
-          <button value="validate" id="license-validate" class="primary-button">
-            <span class="primary-button-label">Doğrula</span>
-          </button>
-        </menu>
+          <button value="validate" id="license-validate" class="primary-button">Doğrula</button>
+        </div>
       </form>
     </dialog>
 
+    <!-- PREMIUM PHOTO -->
     <dialog id="premium-photo-dialog" class="app-dialog">
       <form id="premium-photo-form" method="dialog" class="dialog-form">
-        <span class="dialog-eyebrow">Yüz Doğrulamalı Arama</span>
-        <h2>Referans Görsel Yükleyin</h2>
-        <p>
-          face-api desteği mevcutsa embedding tabanlı, aksi halde algısal hash karşılaştırması
-          uygulanır. Yalnızca yüksek benzerlik oranı doğrulananlar listelenir.
-        </p>
-        <label class="field">
-          <span>Referans Fotoğraf</span>
-          <input id="reference-photo" type="file" accept="image/*" required />
-        </label>
-        <p id="premium-photo-feedback" class="license-feedback" role="status"></p>
-        <menu>
+        <header class="dialog-head">
+          <span class="dialog-eyebrow">Premium</span>
+          <h2>Referans Görsel</h2>
+        </header>
+        <div class="dialog-body">
+          <label class="field">
+            <span>Görsel Yükle</span>
+            <input id="reference-photo" type="file" accept="image/*" required />
+          </label>
+          <p id="premium-photo-feedback" class="license-feedback" role="status"></p>
+        </div>
+        <div class="dialog-actions">
           <button value="cancel" class="ghost-button" formnovalidate>İptal</button>
-          <button value="run" class="primary-button">
-            <span class="primary-button-label">Aramayı Başlat</span>
-          </button>
-        </menu>
+          <button value="ok" class="primary-button">Aramayı Başlat</button>
+        </div>
       </form>
     </dialog>
 
-    <!-- ========== LEGAL DIALOG ========== -->
+    <!-- LEGAL -->
     <dialog id="legal-dialog" class="app-dialog legal-dialog">
-      <article class="dialog-form legal-body">
-        <header class="legal-head">
+      <form method="dialog" class="dialog-form">
+        <header class="dialog-head">
           <span class="dialog-eyebrow" id="legal-eyebrow">Hukuki Belge</span>
           <h2 id="legal-title">—</h2>
         </header>
         <div id="legal-content" class="legal-content"></div>
-        <menu>
-          <button type="button" class="ghost-button" data-close-legal>Kapat</button>
-        </menu>
-      </article>
-    </dialog>
-
-    <!-- ========== COOKIE PREFERENCES ========== -->
-    <dialog id="cookie-prefs-dialog" class="app-dialog">
-      <form method="dialog" class="dialog-form">
-        <span class="dialog-eyebrow">Çerez Tercihleri</span>
-        <h2>Yerel Depolama Yönetimi</h2>
-        <p>SPIDER AI üçüncü taraf izleme yapmaz. Aşağıdaki kategoriler yalnızca yerel depolamada saklanır.</p>
-
-        <ul class="cookie-list">
-          <li>
-            <div>
-              <strong>Zorunlu</strong>
-              <span>Oturum, onay durumu, lisans anahtarı. Devre dışı bırakılamaz.</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" checked disabled />
-              <span class="toggle-slider"></span>
-            </label>
-          </li>
-          <li>
-            <div>
-              <strong>Tercih</strong>
-              <span>Tema seçimi, son kullanılan filtreler, sıralama tercihi.</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="pref-preference" checked />
-              <span class="toggle-slider"></span>
-            </label>
-          </li>
-          <li>
-            <div>
-              <strong>İstatistik</strong>
-              <span>Anonim kullanım sayaçları (yalnızca yerel sayım).</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="pref-stats" />
-              <span class="toggle-slider"></span>
-            </label>
-          </li>
-          <li class="muted">
-            <div>
-              <strong>Pazarlama / İzleme</strong>
-              <span>Bu platformda kullanılmaz.</span>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" disabled />
-              <span class="toggle-slider"></span>
-            </label>
-          </li>
-        </ul>
-
-        <menu>
-          <button value="cancel" class="ghost-button" formnovalidate>İptal</button>
-          <button value="save" id="cookie-prefs-save" class="primary-button">Tercihleri Kaydet</button>
-        </menu>
+        <div class="dialog-actions">
+          <button value="ok" class="primary-button" data-close-legal>Kapat</button>
+        </div>
       </form>
     </dialog>
 
-    <script src="/matrixRain.js"></script>
+    <!-- COOKIE PREFS -->
+    <dialog id="cookie-prefs-dialog" class="app-dialog">
+      <form method="dialog" class="dialog-form">
+        <header class="dialog-head">
+          <span class="dialog-eyebrow">Çerez Tercihleri</span>
+          <h2>Yerel Depolama Yönetimi</h2>
+        </header>
+        <div class="dialog-body">
+          <ul class="cookie-list">
+            <li>
+              <strong>Zorunlu</strong>
+              <p>Oturum, onay ve lisans bilgilerini saklar. Devre dışı bırakılamaz.</p>
+              <span class="cookie-toggle locked">Her zaman aktif</span>
+            </li>
+            <li>
+              <strong>Tercihler</strong>
+              <p>Filtre, sıralama ve görünüm seçimlerini hatırlar.</p>
+              <label class="cookie-toggle">
+                <input type="checkbox" id="pref-preference" checked />
+                <span>Aktif</span>
+              </label>
+            </li>
+            <li>
+              <strong>İstatistikler</strong>
+              <p>Kullanım sayaçları (yalnızca yerel; harici sunucuya gönderilmez).</p>
+              <label class="cookie-toggle">
+                <input type="checkbox" id="pref-stats" />
+                <span>Aktif</span>
+              </label>
+            </li>
+          </ul>
+        </div>
+        <div class="dialog-actions">
+          <button value="cancel" class="ghost-button" formnovalidate>İptal</button>
+          <button value="save" id="cookie-prefs-save" class="primary-button">Tercihleri Kaydet</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="/tabs.js"></script>
     <script type="module" src="/app.js"></script>
     <script type="module" src="/legal.js"></script>
   </body>
