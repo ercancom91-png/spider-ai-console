@@ -31,7 +31,14 @@ const tierChipsEl = document.querySelector("#tier-chips");
 const categoryChipsEl = document.querySelector("#category-chips");
 const sortSelectEl = document.querySelector("#sort-select");
 const resultsEl = document.querySelector("#results");
-const resultsBody = document.querySelector(".results-body");
+// Eski layout'taki .results-body container'ı v0.5'te kaldırıldı
+// (sol panel artık ayrı bir grid kolonunda). Geri uyumluluk için null-safe
+// bir stub kullanıyoruz; classList.add/remove çağrıları sessizce no-op.
+const resultsBody =
+  document.querySelector(".results-body") ||
+  document.querySelector(".results-layout") || {
+    classList: { add() {}, remove() {}, toggle() {} }
+  };
 const subcategoryPanel = document.querySelector("#subcategory-panel");
 const subcategoryList = document.querySelector("#subcategory-list");
 const subcategoryTitle = document.querySelector("#subcategory-title");
