@@ -86,6 +86,16 @@ async function testPlatform(platform) {
     runWmnProbe(platform, ghostHandle, fetchImpl)
   ]);
 
+  // Network hatası (status === 0) site arızası DEĞİL — bağlantı problemi.
+  // Bu durumda kararsız bırak; bu turda disable etme.
+  if (knownOutcome.status === 0 || ghostOutcome.status === 0) {
+    return {
+      key: platform.key,
+      name: platform.name,
+      status: "network-error",
+      reason: `network blip — known status ${knownOutcome.status}, random status ${ghostOutcome.status}`
+    };
+  }
   if (knownOutcome.state !== "exists") {
     return {
       key: platform.key,
@@ -142,13 +152,25 @@ async function main() {
   const broken = results.filter((r) => r.status === "broken-known");
   const fp = results.filter((r) => r.status === "false-positive");
   const noKnown = results.filter((r) => r.status === "no-known");
+  const networkErr = results.filter((r) => r.status === "network-error");
 
   const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
   console.log(`\nSüre: ${elapsed}s`);
-  console.log(`Sağlam:        ${healthy.length}`);
-  console.log(`Known kırık:   ${broken.length}`);
-  console.log(`Yanlış pozitif:${fp.length}`);
+  console.log(`Sağlam:         ${healthy.length}`);
+  console.log(`Known kırık:    ${broken.length}`);
+  console.log(`Yanlış pozitif: ${fp.length}`);
   console.log(`Test handle yok:${noKnown.length}`);
+  console.log(`Network hatası: ${networkErr.length} (kararsız bırakıldı)`);
+
+  // Network blip oranı çok yüksekse (>%40) sweep güvenilmez — disable
+  // listesini güncellemeden çık.
+  const total = results.length;
+  if (total > 0 && networkErr.length / total > 0.4) {
+    console.log(`\n[ABORT] ${networkErr.length}/${total} site network hatası verdi.`);
+    console.log("Bu sweep güvenilir değil; disabled list değiştirilmedi.");
+    console.log("Bağlantınızı kontrol edip tekrar deneyin.");
+    return;
+  }
 
   if (broken.length || fp.length) {
     console.log("\n--- Devre dışı bırakılacak (önerilen) ---");
