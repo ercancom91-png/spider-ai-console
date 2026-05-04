@@ -5,13 +5,13 @@ services:
     plan: free
     region: frankfurt
     branch: main
-    buildCommand: ""
+    buildCommand: "npm ci --omit=dev"
     startCommand: node src/server.js
     healthCheckPath: /api/config
     autoDeploy: true
     envVars:
       - key: NODE_VERSION
-        value: "24"
+        value: "22"
       - key: USE_DEMO_PROVIDER
         value: "true"
       - key: ENABLE_BG_CRAWL
