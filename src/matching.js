@@ -355,26 +355,85 @@ function matchName(name, folded, compactFolded, foldedTokens) {
     return { matched: false, kind: "" };
   }
 
+  // Tier 1: Tam isim ifadesi geçiyor ("ahmet denizli"). En güçlü sinyal —
+  // tokenler bitişik. Ancak soyadı "denizli" gibi yer adıysa ve sayfa
+  // sürekli locative kullanıyorsa (Denizli'de, Denizli ili) gerçek bir kişi
+  // referansı sayılmaz.
   if (folded.includes(canonical)) {
+    if (looksLikeLocationOnly(nameTokens[nameTokens.length - 1], folded)) {
+      return { matched: false, kind: "" };
+    }
     return { matched: true, kind: "exact" };
   }
 
   if (compactFolded.includes(compact)) {
+    if (looksLikeLocationOnly(nameTokens[nameTokens.length - 1], folded)) {
+      return { matched: false, kind: "" };
+    }
     return { matched: true, kind: "compact" };
   }
 
   if (isNearCompactPhrase(compact, compactFolded)) {
+    if (looksLikeLocationOnly(nameTokens[nameTokens.length - 1], folded)) {
+      return { matched: false, kind: "" };
+    }
     return { matched: true, kind: "fuzzy" };
   }
 
-  const matchedTokens = nameTokens.filter((nameToken) =>
-    foldedTokens.some((token) => isNearToken(nameToken, token, nameMaxDistance(nameToken)))
+  // Tier 2: Tüm name token'leri sayfada geçiyor. "ahmet" sayfada bir yerde,
+  // "denizli" başka yerde geçiyorsa bu kişi-yer çakışması olabilir. Token
+  // pozisyonlarının birbirine yakın olduğunu (≤4 slot) doğrula.
+  const positions = nameTokens.map((nameToken) =>
+    foldedTokens.findIndex((token) => isNearToken(nameToken, token, nameMaxDistance(nameToken)))
   );
+  if (positions.some((p) => p < 0)) {
+    return { matched: false, kind: "" };
+  }
 
-  return {
-    matched: matchedTokens.length === nameTokens.length,
-    kind: matchedTokens.length === nameTokens.length ? "fuzzy" : ""
-  };
+  const minPos = Math.min(...positions);
+  const maxPos = Math.max(...positions);
+  if (maxPos - minPos > 4) {
+    // Tokenler dağınık → muhtemelen rastlantı (örn. ad bir yerde, soyad farklı
+    // bağlamda geçiyor). Eşleşme olarak kabul etme.
+    return { matched: false, kind: "" };
+  }
+
+  // Soyad locative-marked ise (Denizli'de tarzı), reddet.
+  if (looksLikeLocationOnly(nameTokens[nameTokens.length - 1], folded)) {
+    return { matched: false, kind: "" };
+  }
+
+  return { matched: true, kind: "fuzzy" };
+}
+
+// Soyad olarak verilen token'in sayfa metninde "şehir" anlamında baskın
+// kullanılıp kullanılmadığını belirler. Türkçe locative işaretleri:
+//   Denizli'de / Denizli'den / Denizli'ye / Denizli'nin (apostrofla)
+//   Denizli ilinde / şehrinde / ilçesinde / ilinden (açıkça yer markerı)
+// Apostrofla işaretli + city-marker'lı sayım toplam geçişin %70+'siyse,
+// token kişi adı değil yer adı olarak kullanılıyor demektir.
+function looksLikeLocationOnly(token, folded) {
+  if (!token || token.length < 4) return false;
+  const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const totalRe = new RegExp(`\\b${escaped}\\b`, "g");
+  const totalMatches = folded.match(totalRe) || [];
+  if (totalMatches.length < 2) return false; // tek geçiş için karar verme
+
+  // Apostrof + Türkçe ek (de/den/ye/nin/nde/li) ile takip eden kullanımlar
+  const apostropheRe = new RegExp(`\\b${escaped}[\\u0027\\u2018\\u2019]`, "g");
+  const apostropheMatches = folded.match(apostropheRe) || [];
+
+  // Açık city marker takibi
+  const cityMarkerRe = new RegExp(
+    `\\b${escaped}\\s+(?:ili|şehri|ilçesi|ilinde|şehrinde|ilçesinde|ilinden|şehrinden|merkezinde|civarında)\\b`,
+    "g"
+  );
+  const cityMatches = folded.match(cityMarkerRe) || [];
+
+  const locativeCount = apostropheMatches.length + cityMatches.length;
+  const ratio = locativeCount / totalMatches.length;
+  return locativeCount >= 2 && ratio >= 0.7;
 }
 
 function compactText(value) {

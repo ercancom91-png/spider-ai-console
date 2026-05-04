@@ -81,6 +81,27 @@ export function buildAuditReport({
   };
 }
 
+// Search engine indekslerinde bazen 404 / hata sayfalarına çıkan URL'ler kalır.
+// Filtreden geçen sonuçlarda kullanıcı bu linklere tıklayınca boş sayfa gelir.
+// Sonucu listeye almadan önce URL'in açıkça "ölü" örüntüye sahip olup
+// olmadığını kontrol et — daha derin liveness check için HEAD pahalı, bu basit
+// pattern filtresi en yaygın sahte sonuçları eliyor.
+function looksLikeDeadUrl(url) {
+  if (typeof url !== "string" || !url) return true;
+  const lowered = url.toLowerCase();
+  // Path-level "not found" işaretleri
+  if (/\/(404|not[-_]?found|page[-_]?not[-_]?found|gone|errors?|missing|deleted)(?:[/?#]|$)/.test(lowered)) {
+    return true;
+  }
+  // Query string'te hata kodu
+  if (/[?&](?:error|err|code|status)=(?:404|410|451|deleted|removed|notfound)\b/.test(lowered)) {
+    return true;
+  }
+  // Bazı sosyal platformların "user does not exist" yönlendirme deseni
+  if (/\/_\/(?:gone|deactivated|deleted)/.test(lowered)) return true;
+  return false;
+}
+
 // UI'da "İncelenen Kaynaklar" listesi için ham aday URL'leri çıkar.
 // Eşleşme akışı 0 sonuç verse bile kullanıcı tarama izini görebilsin.
 function buildScannedCandidates(dedupedRaw) {
@@ -99,6 +120,7 @@ function buildScannedCandidates(dedupedRaw) {
 function dedupeRawResults(results = []) {
   const seen = new Map();
   for (const result of results) {
+    if (looksLikeDeadUrl(result?.url)) continue;
     const key = canonicalUrlKey(result?.url);
     if (!key) continue;
     const existing = seen.get(key);
