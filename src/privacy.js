@@ -59,13 +59,28 @@ export function validateConsent(consent = {}, subject) {
     }
   }
 
-  if (!subject.identifiers.some((identifier) => identifier.valid && identifier.type !== "photoHash")) {
-    errors.push("En az bir geçerli e-posta, telefon, kullanıcı adı veya isim soyisim girilmeli.");
-  }
+  // Tek anlamlı hata mesajı stratejisi:
+  //   - Hiç geçerli kimlik yoksa: tek net mesaj. Format hatalarını
+  //     ayrıca gösterme — kullanıcıyı boğmasın.
+  //   - En az bir geçerli kimlik varsa ve diğer alanlardan biri yanlış
+  //     formatta dolu (ör. "abc" e-posta alanına yazıldı) o zaman
+  //     o alan-spesifik hatayı göster.
+  const validIdentifiers = subject.identifiers.filter(
+    (identifier) => identifier.valid && identifier.type !== "photoHash"
+  );
 
-  const invalidIdentifiers = subject.identifiers.filter((identifier) => !identifier.valid);
-  for (const identifier of invalidIdentifiers) {
-    errors.push(`${identifier.label} formatı geçerli değil.`);
+  if (validIdentifiers.length === 0) {
+    errors.push(
+      "Aramayı başlatmak için bir geçerli kimlik bilgisi girin: e-posta, telefon, kullanıcı adı (≥3 karakter) veya iki kelimelik isim soyisim."
+    );
+  } else {
+    // Sadece kullanıcının açıkça doldurduğu invalid alanlar için format hatası göster.
+    // type === "username" ise canonical değer formatı tipsiz auto-derive olabilir,
+    // o yüzden user-input ile uyuşmuyorsa atla.
+    const invalidIdentifiers = subject.identifiers.filter((identifier) => !identifier.valid);
+    for (const identifier of invalidIdentifiers) {
+      errors.push(`${identifier.label} formatı geçerli değil.`);
+    }
   }
 
   return {

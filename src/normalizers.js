@@ -100,13 +100,18 @@ export function normalizeSubject(input = {}) {
     });
   }
 
-  if (fullName) {
+  // Yalnızca iki+ kelimelik girdileri "isim soyisim" olarak değerlendir.
+  // Tek kelime girilmişse (ör. "devrim") usernameFromPrimaryQuery zaten onu
+  // kullanıcı adı olarak yakaladı; name identifier'ı invalid olarak ekleyip
+  // kullanıcıya "İsim soyisim formatı geçerli değil" hatası vermek yanıltıcı
+  // olur — kullanıcı zaten bir kimlik girdi, biz onu username olarak yorumladık.
+  if (fullName && fullName.split(" ").filter(Boolean).length >= 2) {
     identifiers.push({
       type: "name",
       label: "İsim soyisim",
       canonical: fullName,
       variants: [fullName],
-      valid: fullName.split(" ").length >= 2
+      valid: true
     });
   }
 
