@@ -1,7 +1,18 @@
 import { buildSearchQueries } from "../normalizers.js";
 
-const USER_AGENT =
-  "SpiderAIBrowser/0.1 (+https://localhost; user-authorized public web search)";
+// UA rotation: bot-revealing UA (eski "SpiderAIBrowser/0.1") → Bing/DDG anında
+// CAPTCHA/blok cevabı dönüyordu ve provider 0 sonuçla kapanıyordu. Tarayıcı
+// gibi görünen masaüstü UA havuzundan rastgele seçim yapıyoruz.
+const USER_AGENTS = [
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"
+];
+function randomUA() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
 
 export async function searchSelfMade(subject, options = {}) {
   const queries = buildSelfMadeQueries(subject, options);
@@ -129,41 +140,71 @@ async function searchBingHtml(query, options) {
 }
 
 async function searchDuckDuckGoHtml(query) {
+  // DDG HTML endpoint POST'u tercih ediyor; GET çoğu zaman bot interstitial
+  // (anomaly page) döndürüyor. Form-encoded POST ile result__a listesini al.
   const url = new URL("https://html.duckduckgo.com/html/");
-  url.searchParams.set("q", query);
+  const body = new URLSearchParams({ q: query, kl: "tr-tr" }).toString();
 
-  const html = await fetchText(url);
-  const items = html.match(/<div class="result[\s\S]*?<\/div>\s*<\/div>/g) || [];
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "User-Agent": randomUA(),
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.7",
+      Referer: "https://duckduckgo.com/",
+      "Upgrade-Insecure-Requests": "1"
+    },
+    body,
+    redirect: "follow",
+    signal: AbortSignal.timeout(9_000)
+  });
+  if (!response.ok) return [];
+  const html = await response.text();
 
-  return items.map((item) => {
-    const link = matchFirst(
-      item,
-      /<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i
-    );
-    const snippet = matchFirst(
-      item,
-      /<a[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/a>|<div[^>]*class="result__snippet"[^>]*>([\s\S]*?)<\/div>/i
-    );
+  // DDG result item: <a class="result__a" href="..."> + sibling snippet div.
+  // Yapı düzelt: tüm result__a ve result__snippet'i ayrı çıkar, sırayla zip et.
+  const linkPattern = /<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  const snippetPattern = /<(?:a|div)[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/(?:a|div)>/g;
 
-    return {
+  const links = [];
+  let m;
+  while ((m = linkPattern.exec(html))) {
+    links.push({ url: decodeHtml(m[1] || ""), title: cleanText(m[2] || "") });
+  }
+  const snippets = [];
+  while ((m = snippetPattern.exec(html))) {
+    snippets.push(cleanText(m[1] || ""));
+  }
+
+  return links
+    .map((entry, i) => ({
       provider: "SPIDER Live",
       sourceType: "self-made-live",
-      title: cleanText(link?.[2] || ""),
-      url: normalizeDuckDuckGoUrl(decodeHtml(link?.[1] || "")),
-      snippet: cleanText(snippet?.[1] || snippet?.[2] || ""),
+      title: entry.title,
+      url: normalizeDuckDuckGoUrl(entry.url),
+      snippet: snippets[i] || "",
       query,
       fetchedAt: new Date().toISOString()
-    };
-  }).filter((result) => result.url && result.title);
+    }))
+    .filter((result) => result.url && result.title && result.url.startsWith("http"));
 }
 
 async function fetchText(url) {
+  // 4.5 sn → 9 sn: Bing/DDG search ilk yanıtta çoğu zaman 5+ sn bekliyor
+  // (özellikle Render Frankfurt → US edge). Çok kısa timeout = boş sonuç.
   const response = await fetch(url, {
     headers: {
-      "User-Agent": USER_AGENT,
-      Accept: "text/html,application/xhtml+xml"
+      "User-Agent": randomUA(),
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.7,en;q=0.5",
+      "Accept-Encoding": "gzip, deflate, br",
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+      "Upgrade-Insecure-Requests": "1"
     },
-    signal: AbortSignal.timeout(4_500)
+    redirect: "follow",
+    signal: AbortSignal.timeout(9_000)
   });
 
   if (!response.ok) {

@@ -34,6 +34,19 @@ export function buildAuditReport({
   const strong = ranked.filter((result) => result.matchLevel === "strong").length;
   const review = ranked.filter((result) => result.matchLevel === "review").length;
 
+  // Toplam denenen kaynak sayısı: profile-probe katalog + email-probe modülleri
+  // + her web search engine. UI bunu "X kaynak denendi" başlığında gösteriyor.
+  let totalAttempted = 0;
+  for (const provider of providerStatus || []) {
+    if (provider.kind === "profile-probe") {
+      totalAttempted += provider.diagnostics?.platformsTotal || 0;
+    } else if (provider.kind === "email-probe") {
+      totalAttempted += provider.diagnostics?.modulesTotal || 0;
+    } else {
+      totalAttempted += 1;
+    }
+  }
+
   const tiers = {
     direct: ranked.filter((r) => r.matchTier === "direct").length,
     strong: ranked.filter((r) => r.matchTier === "strong").length,
@@ -48,6 +61,7 @@ export function buildAuditReport({
     subject: publicSubjectView(subject),
     summary: {
       totalCandidates: rawResults.length,
+      totalAttempted,
       dedupedCandidates: dedupedRaw.length,
       exactEvidenceResults: ranked.length,
       confirmed,
@@ -76,9 +90,84 @@ export function buildAuditReport({
     visualSearch: buildVisualSearch({ subject, results: ranked }),
     phoneInsight: subject.phone?.raw ? buildPhoneInsight(subject.phone.raw) : null,
     scannedCandidates: buildScannedCandidates(dedupedRaw),
+    attemptedSources: buildAttemptedSources(providerStatus, dedupedRaw),
     results: ranked,
     warnings
   };
+}
+
+// Profile-probe + email-probe + WMN katalog: tüm denenmiş platformların
+// hit/miss durumunu UI'a aktar. Kullanıcı "750 site denendi" gerçeğini her
+// satırda görsün — yeşil nokta = profil bulundu, gri = bulunamadı, sarı =
+// CDN/login wall yüzünden belirsiz. Ayrıca web search engine'lerin per-engine
+// sonuç sayısını da ekler.
+function buildAttemptedSources(providerStatus, dedupedRaw) {
+  if (!Array.isArray(providerStatus)) return [];
+  const hitUrls = new Set((dedupedRaw || []).map((r) => r?.url).filter(Boolean));
+  const hitHosts = new Set();
+  for (const url of hitUrls) {
+    try {
+      hitHosts.add(new URL(url).host.replace(/^www\./, ""));
+    } catch {
+      /* skip */
+    }
+  }
+
+  const out = [];
+
+  for (const provider of providerStatus) {
+    // Profile probe — denenen tüm platformları açıkça listele.
+    if (provider.kind === "profile-probe" && Array.isArray(provider.diagnostics?.probedPlatforms)) {
+      const hitKeys = new Set(provider.diagnostics.hitPlatforms || []);
+      for (const platform of provider.diagnostics.probedPlatforms) {
+        const host = (platform.host || "").replace(/^www\./, "");
+        const isHit = hitHosts.has(host) || (platform.key && hitKeys.has(platform.key));
+        out.push({
+          name: platform.name,
+          host,
+          category: platform.category,
+          source: platform.source || "probe",
+          providerName: provider.name,
+          status: isHit ? "hit" : "miss"
+        });
+      }
+      continue;
+    }
+
+    // Email probe — denenen tüm modülleri listele.
+    if (provider.kind === "email-probe" && Array.isArray(provider.diagnostics?.probedModules)) {
+      const hits = new Set(provider.diagnostics.hitModules || []);
+      for (const moduleEntry of provider.diagnostics.probedModules) {
+        out.push({
+          name: moduleEntry.name,
+          host: moduleEntry.host || moduleEntry.name,
+          category: "email-probe",
+          source: "email-probe",
+          providerName: provider.name,
+          status: hits.has(moduleEntry.name) ? "hit" : "miss"
+        });
+      }
+      continue;
+    }
+
+    // Web search engine'ler — fulfilled / failed / skipped + sonuç sayısı.
+    if (["web-search", "self-made-live", "self-hosted-index", "developer", "community-forum", "archive", "knowledge-base"].includes(provider.kind)) {
+      out.push({
+        name: provider.name,
+        host: provider.name,
+        category: provider.kind,
+        source: "search-engine",
+        providerName: provider.name,
+        status: provider.status === "fulfilled"
+          ? (provider.resultCount > 0 ? "hit" : "miss")
+          : provider.status === "skipped" ? "skipped" : "failed",
+        resultCount: provider.resultCount || 0,
+        reason: provider.reason || null
+      });
+    }
+  }
+
+  return out;
 }
 
 // Search engine indekslerinde bazen 404 / hata sayfalarına çıkan URL'ler kalır.

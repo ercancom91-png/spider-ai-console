@@ -281,11 +281,17 @@ export function rankResults(results, identifiers) {
     .map((result) => scoreSearchResult(result, identifiers))
     .filter((result) => result.evidence.length > 0)
     .filter((result) => {
-      // Username yardımcı parametre. Kullanıcı isim/telefon/e-posta'dan birini
-      // bile girdiyse, sadece username eşleşen sonuçları listeden çıkar — bunlar
-      // primary kanıt taşımıyor. Eğer user yalnız username verdiyse (primary
-      // yok), o zaman fallback olarak username-only sonuçları geçirelim ki
-      // tamamen boş ekran olmasın.
+      // Profile-probe direct hit'leri (Instagram, Telegram, X, TikTok, GitHub
+      // dahil 750+ platform) HER ZAMAN listede kalır — kullanıcı adının o
+      // platformda kayıtlı olduğu canlı, doğrulanmış bir sinyaldir. Primary
+      // identifier (isim/email/phone) eşleşmese bile silinmez, sadece "mention"
+      // tier'ında durur.
+      if (result.sourceType === "profile-probe") return true;
+
+      // Web/forum/archive sonuçları: kullanıcı isim/telefon/e-posta'dan birini
+      // verdiyse bunlardan en az birinin sayfada geçmesini iste — saf username
+      // bahsi yeterli değil, çünkü search engine'de username başka bir kişiyi
+      // anlatıyor olabilir.
       if (!hasPrimaryIdentifier) return true;
       return result.evidence.some(
         (item) => item.type === "name" || item.type === "email" || item.type === "phone"

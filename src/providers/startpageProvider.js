@@ -1,8 +1,15 @@
 import { buildSearchQueries } from "../normalizers.js";
 
-const USER_AGENT =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15";
-const TIMEOUT_MS = 8_000;
+const USER_AGENTS = [
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3 Safari/605.1.15",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+];
+function randomUA() {
+  return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
+}
+const TIMEOUT_MS = 12_000;
 const RESULTS_PER_QUERY = 10;
 
 // Startpage proxies Google results — no API key, no login. Better coverage for
@@ -117,10 +124,14 @@ async function fetchStartpage(query) {
 
   const response = await fetch(url, {
     headers: {
-      "User-Agent": USER_AGENT,
-      "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.5",
-      Accept: "text/html,application/xhtml+xml"
+      "User-Agent": randomUA(),
+      "Accept-Language": "tr-TR,tr;q=0.9,en-US;q=0.7,en;q=0.5",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Cache-Control": "no-cache",
+      "Upgrade-Insecure-Requests": "1",
+      Referer: "https://www.startpage.com/"
     },
+    redirect: "follow",
     signal: AbortSignal.timeout(TIMEOUT_MS)
   });
 
@@ -129,7 +140,11 @@ async function fetchStartpage(query) {
   return parseResults(html, query).slice(0, RESULTS_PER_QUERY);
 }
 
-const RESULT_PATTERN = /<a[^>]*class="[^"]*result-link[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<p[^>]*class="description[^"]*"[^>]*>([\s\S]*?)<\/p>/g;
+// Startpage HTML class isimleri zaman zaman değişiyor; eski "result-link" tek
+// pattern artık çoğu zaman 0 sonuç dönüyordu. Birden fazla varyantı dene:
+//   - .result-link / .result-title / .w-gl__result-title
+//   - .description / .w-gl__description / .result__snippet
+const RESULT_PATTERN = /<a[^>]*class="[^"]*(?:result-link|w-gl__result-title|result-title)[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<(?:p|div|span)[^>]*class="[^"]*(?:description|w-gl__description|result__snippet)[^"]*"[^>]*>([\s\S]*?)<\/(?:p|div|span)>/g;
 
 function parseResults(html, query) {
   const items = [];

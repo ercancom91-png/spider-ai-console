@@ -436,14 +436,21 @@ function renderSummary() {
   const { summary } = state.report;
   const tiers = summary.tiers || { direct: 0, strong: 0, mention: 0 };
 
+  // Başlık: kullanıcı "23 tarandı" değil, "780 kaynak denendi" görsün — bu
+  // gerçek tarama hacmi (tüm probe'lar + arama motorları). exactEvidenceResults
+  // = kanıt eşleşen sonuç sayısı.
+  const attemptedLabel = summary.totalAttempted
+    ? `${summary.totalAttempted} kaynak denendi`
+    : `${summary.totalCandidates} sonuç tarandı`;
+
   resultTitleEl.textContent =
     summary.exactEvidenceResults === 0
-      ? `${summary.totalCandidates} sonuç tarandı, eşleşme yok`
-      : `${summary.exactEvidenceResults} eşleşme bulundu`;
+      ? `${attemptedLabel} · eşleşme yok`
+      : `${attemptedLabel} · ${summary.exactEvidenceResults} eşleşme`;
 
   resultSubtitleEl.textContent =
     summary.exactEvidenceResults === 0
-      ? "Kanıt taşımayan sonuçlar listelenmez."
+      ? "Kanıt taşımayan sonuçlar listelenmez. Aşağıdaki 'İncelenen Kaynaklar' bölümünden hangi platformların denendiğini görebilirsin."
       : `${tiers.direct} tam · ${tiers.strong} güçlü · ${tiers.mention} bahsediyor`;
 
   summaryMetricsEl.innerHTML = [
@@ -646,9 +653,11 @@ function groupBy(items, keyFn) {
   return map;
 }
 
-// Eşleşme akışından önce / dışında ham olarak taranan tüm aday URL'leri göster.
-// Kullanıcı "181 sonuç tarandı" başlığının arkasındaki gerçek listeyi
-// görebilsin. Provider'a göre gruplanır.
+// "İncelenen Kaynaklar" — DENENEN her platformu hit/miss durumuyla göster.
+// 750+ profil platformu (Insta, X, Telegram, TikTok, Snapchat, Steam, Twitch,
+// vs.) + e-posta probe modülleri + web arama motorları, hepsi tek listede.
+// Yeşil nokta = profil bulundu, gri = kullanıcı yok, sarı = belirsiz/blok,
+// kırmızı = istek hatası.
 function renderScannedCandidates() {
   if (!state.report) {
     scannedCandidatesEl.hidden = true;
@@ -656,43 +665,81 @@ function renderScannedCandidates() {
     return;
   }
 
-  const candidates = state.report.scannedCandidates || [];
-  if (!candidates.length) {
+  const attempted = state.report.attemptedSources || [];
+  if (!attempted.length) {
     scannedCandidatesEl.hidden = true;
     return;
   }
 
   scannedCandidatesEl.hidden = false;
 
-  const matchedUrls = new Set((state.report.results || []).map((r) => r.url));
-  const byProvider = groupBy(candidates, (c) => c.provider || "—");
+  // Provider'a göre grupla; profile-probe içinde de kategori (social/dev/...) bazlı.
+  const byProvider = groupBy(attempted, (c) => c.providerName || c.provider || "—");
   const providerOrder = Object.keys(byProvider).sort(
     (a, b) => byProvider[b].length - byProvider[a].length
   );
 
+  const STATUS_DOT = {
+    hit: `<span class="cand-dot ok" title="Profil/sonuç bulundu">●</span>`,
+    miss: `<span class="cand-dot" title="Profil/sonuç yok"></span>`,
+    skipped: `<span class="cand-dot warn" title="Atlandı (API key yok / config eksik)">○</span>`,
+    failed: `<span class="cand-dot err" title="İstek hatası / timeout">✕</span>`,
+    unknown: `<span class="cand-dot warn" title="Belirsiz (CDN / login wall)">?</span>`
+  };
+
+  const STATUS_LABEL = {
+    hit: "bulundu",
+    miss: "bulunamadı",
+    skipped: "atlandı",
+    failed: "hata",
+    unknown: "belirsiz"
+  };
+
   const blocks = providerOrder
     .map((provider) => {
-      const items = byProvider[provider]
+      const entries = byProvider[provider];
+      const counts = { hit: 0, miss: 0, skipped: 0, failed: 0, unknown: 0 };
+      for (const e of entries) {
+        counts[e.status] = (counts[e.status] || 0) + 1;
+      }
+
+      // hit'leri öne al, sonra miss/unknown/skipped/failed
+      const order = { hit: 0, unknown: 1, miss: 2, skipped: 3, failed: 4 };
+      const sorted = [...entries].sort(
+        (a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9) || a.name.localeCompare(b.name)
+      );
+
+      const items = sorted
         .map((c) => {
-          const matched = matchedUrls.has(c.url);
-          const dot = matched
-            ? `<span class="cand-dot ok" title="Eşleşme oldu">●</span>`
-            : `<span class="cand-dot" title="Eşleşme zayıf — kanıt yok"></span>`;
+          const dot = STATUS_DOT[c.status] || STATUS_DOT.miss;
+          const hostHtml = c.host && c.host !== c.name
+            ? `<span class="cand-host">${escape(c.host)}</span>`
+            : "";
           return `
-            <li>
+            <li class="cand-${c.status}">
               ${dot}
-              <a href="${escape(c.url)}" target="_blank" rel="noreferrer" class="cand-link">
-                <span class="cand-title">${escape(c.title || c.host)}</span>
-                <span class="cand-host">${escape(c.host)}</span>
-              </a>
+              <span class="cand-title">${escape(c.name)}</span>
+              ${hostHtml}
             </li>`;
         })
         .join("");
+
+      const summaryBits = [];
+      if (counts.hit) summaryBits.push(`<span class="cand-pill ok">${counts.hit} bulundu</span>`);
+      if (counts.miss) summaryBits.push(`<span class="cand-pill">${counts.miss} yok</span>`);
+      if (counts.unknown) summaryBits.push(`<span class="cand-pill warn">${counts.unknown} belirsiz</span>`);
+      if (counts.skipped) summaryBits.push(`<span class="cand-pill warn">${counts.skipped} atlandı</span>`);
+      if (counts.failed) summaryBits.push(`<span class="cand-pill err">${counts.failed} hata</span>`);
+
+      // hit varsa varsayılan açık, yoksa kapalı (uzun listeyi başta gizle)
+      const open = counts.hit > 0 ? "open" : "";
+
       return `
-        <details class="cand-block">
+        <details class="cand-block" ${open}>
           <summary>
             <span class="cand-eyebrow">${escape(provider)}</span>
-            <span class="cand-count">${byProvider[provider].length} URL</span>
+            <span class="cand-count">${entries.length} kaynak</span>
+            <span class="cand-summary">${summaryBits.join(" ")}</span>
           </summary>
           <ul class="cand-list">${items}</ul>
         </details>
@@ -700,11 +747,20 @@ function renderScannedCandidates() {
     })
     .join("");
 
-  const matchedCount = candidates.filter((c) => matchedUrls.has(c.url)).length;
+  const totalHit = attempted.filter((c) => c.status === "hit").length;
+  const totalMiss = attempted.filter((c) => c.status === "miss").length;
+  const totalUnknown = attempted.filter((c) => c.status === "unknown").length;
+  const totalSkipped = attempted.filter((c) => c.status === "skipped").length;
+  const totalFailed = attempted.filter((c) => c.status === "failed").length;
+
   scannedCandidatesEl.innerHTML = `
     <header class="scanned-head">
       <span class="scanned-eyebrow-large">İncelenen Kaynaklar</span>
-      <span class="scanned-total">${candidates.length} ham URL · ${matchedCount} eşleşti · ${candidates.length - matchedCount} kanıtsız</span>
+      <span class="scanned-total">
+        ${attempted.length} kaynak denendi ·
+        <strong class="cand-good">${totalHit} bulundu</strong> ·
+        ${totalMiss} yok${totalUnknown ? ` · ${totalUnknown} belirsiz` : ""}${totalSkipped ? ` · ${totalSkipped} atlandı` : ""}${totalFailed ? ` · ${totalFailed} hata` : ""}
+      </span>
     </header>
     ${blocks}
   `;
@@ -869,10 +925,31 @@ function renderResults() {
   const sorted = sortResults(filtered, state.sort);
 
   if (sorted.length === 0) {
-    resultsEl.innerHTML = `<li class="empty-state">
-      <strong>Bu filtrelerde sonuç yok.</strong>
-      <span>Kademe, kategori veya alt kategori filtresini genişlet.</span>
-    </li>`;
+    const total = (state.report.results || []).length;
+    const filtersActive = state.filterTier !== "all" || state.filterCategory !== "all" || state.filterSubcategory !== "all";
+    if (filtersActive && total > 0) {
+      resultsEl.innerHTML = `<li class="empty-state">
+        <strong>Filtreler nedeniyle bu görünümde sonuç yok.</strong>
+        <span>${total} sonuç var; aşağıdaki butonla filtreleri sıfırla.</span>
+        <button type="button" class="primary-button" id="reset-filters-btn">Tüm filtreleri sıfırla</button>
+      </li>`;
+      const btn = document.querySelector("#reset-filters-btn");
+      if (btn) {
+        btn.addEventListener("click", () => {
+          state.filterTier = "all";
+          state.filterCategory = "all";
+          state.filterSubcategory = "all";
+          renderFilters();
+          renderSubcategoryPanel();
+          renderResults();
+        });
+      }
+    } else {
+      resultsEl.innerHTML = `<li class="empty-state">
+        <strong>Eşleşen sonuç bulunamadı.</strong>
+        <span>"İncelenen Kaynaklar" bölümünden hangi platformların denenmiş olduğunu görebilirsin.</span>
+      </li>`;
+    }
     return;
   }
 

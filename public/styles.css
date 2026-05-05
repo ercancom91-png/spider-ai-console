@@ -1133,7 +1133,41 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-size: 13px; font-weight: 500;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.cand-host { font-family: var(--mono); font-size: 10.5px; color: var(--text-4); }
+.cand-host { font-family: var(--mono); font-size: 10.5px; color: var(--text-4); margin-left: auto; }
+
+/* "İncelenen Kaynaklar" — multi-status (hit/miss/unknown/skipped/failed) */
+.cand-summary {
+  display: inline-flex; flex-wrap: wrap; gap: 6px;
+  margin-left: 12px; flex: 1; justify-content: flex-end;
+}
+.cand-pill {
+  font-family: var(--mono); font-size: 9.5px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+  background: var(--surface-3); color: var(--text-3);
+  border: 1px solid var(--border);
+}
+.cand-pill.ok  { background: rgba(16,185,129,0.12); color: #047857; border-color: rgba(16,185,129,0.3); }
+.cand-pill.warn{ background: rgba(245,158,11,0.12); color: #b45309; border-color: rgba(245,158,11,0.3); }
+.cand-pill.err { background: rgba(239,68,68,0.12);  color: #b91c1c; border-color: rgba(239,68,68,0.3); }
+
+.cand-dot.warn {
+  background: var(--amber, #f59e0b); border-color: var(--amber, #f59e0b);
+  color: #fff; font-size: 10px; line-height: 8px; text-align: center;
+  box-shadow: 0 0 6px rgba(245,158,11,0.35);
+}
+.cand-dot.err {
+  background: #ef4444; border-color: #ef4444;
+  color: #fff; font-size: 9px; line-height: 8px; text-align: center;
+  box-shadow: 0 0 6px rgba(239,68,68,0.35);
+}
+
+.cand-list li.cand-miss   { opacity: 0.55; }
+.cand-list li.cand-skipped{ opacity: 0.5; }
+.cand-list li.cand-failed { opacity: 0.5; }
+.cand-list li.cand-hit    { background: rgba(16,185,129,0.04); }
+
+.cand-good { color: #047857; font-weight: 700; }
 
 /* ============================================================
    STATIC PAGES (Hakkında / Kaynaklar)
